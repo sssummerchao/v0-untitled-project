@@ -1,0 +1,30 @@
+{
+  "tfjsVersion": "1.7.4",
+  "tmVersion": "2.4.10",
+  "packageVersion": "0.8.4-alpha2",
+  "packageName": "@teachablemachine/image",
+  "timeStamp": "2025-04-19T16:14:56.927Z",
+  "userMetadata": {},
+  "modelName": "tm-my-image-model",
+  "labels": [
+    "Floral pattern",
+    "Dark navy",
+    "Turquoise dots",
+    "Abstract shapes",
+    "Navy blue",
+    "Orange/rust",
+    "Art Deco",
+    "Burgundy/purple",
+    "Golden cross-stitch",
+    "Teal green",
+    "Light blue dots",
+    "Orange dots",
+    "Peach floral",
+    "Mint grid",
+    "Dark floral",
+    "Solid orange",
+    "Colorful plaid",
+    "Gray knit"
+  ],
+  "imageSize": 224
+}
