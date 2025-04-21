@@ -79,7 +79,6 @@ export default function LogCabinPatternEditor() {
     setSelectedShapes([])
   }
 
-  // Replace the handleDownload function with this:
   // Download the current pattern
   const handleDownload = async () => {
     if (!svgRef.current) return
@@ -100,6 +99,19 @@ export default function LogCabinPatternEditor() {
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       <div className="flex flex-col items-center gap-6">
+        {/* Random Fill button moved to the top */}
+        <div className="w-full flex justify-center mb-2">
+          <button
+            onClick={fillRandomFabrics}
+            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity"
+          >
+            <div className="bg-gray-200 rounded-full p-2 mr-3">
+              <Shuffle size={16} className="text-black" />
+            </div>
+            <span className="text-lg font-serif font-bold">Random Fill</span>
+          </button>
+        </div>
+
         <div className="border border-gray-300 rounded-lg overflow-hidden">
           <svg
             ref={svgRef}
@@ -163,48 +175,15 @@ export default function LogCabinPatternEditor() {
           </svg>
         </div>
 
-        {/* Selection info */}
-        <div className="text-sm text-gray-500">
+        {/* Fixed height selection info to prevent layout shifts */}
+        <div className="text-sm text-gray-500 h-6">
           {selectedShapes.length === 0
             ? "No shapes selected"
             : `${selectedShapes.length} shape${selectedShapes.length > 1 ? "s" : ""} selected`}
         </div>
 
-        {/* Controls */}
-        <div className="flex gap-4 flex-wrap justify-center">
-          {selectedShapes.length > 0 && (
-            <button
-              onClick={clearSelectedImages}
-              className="bg-white border border-gray-300 text-gray-700 rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-50 transition-colors"
-            >
-              <div className="bg-gray-200 rounded-full p-2 mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-black"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="text-lg font-serif font-bold">Clear Selected</span>
-            </button>
-          )}
-
-          <button
-            onClick={fillRandomFabrics}
-            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity"
-          >
-            <div className="bg-gray-200 rounded-full p-2 mr-3">
-              <Shuffle size={16} className="text-black" />
-            </div>
-            <span className="text-lg font-serif font-bold">Random Fill</span>
-          </button>
-
+        {/* Controls with fixed minimum height - Clear Selected button removed */}
+        <div className="flex gap-4 flex-wrap justify-center min-h-[60px]">
           <button
             onClick={handleDownload}
             className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity"
@@ -212,7 +191,6 @@ export default function LogCabinPatternEditor() {
             <div className="bg-gray-200 rounded-full p-2 mr-3">
               <Download size={16} className="text-black" />
             </div>
-            {/* Update the download button text */}
             <span className="text-lg font-serif font-bold">{isDownloading ? "Generating..." : "Download PNG"}</span>
           </button>
         </div>

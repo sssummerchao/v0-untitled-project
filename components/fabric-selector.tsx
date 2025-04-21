@@ -68,19 +68,24 @@ export default function FabricSelector({ selectedShapes, onApplyFabric, classNam
 
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
-      {selectedShapes.length === 0 ? (
-        <Alert className="mb-4">
-          <AlertTitle>No shapes selected</AlertTitle>
-          <AlertDescription>Please select one or more shapes in the pattern before choosing a fabric.</AlertDescription>
-        </Alert>
-      ) : (
-        <Alert className="mb-4">
-          <AlertTitle>Shapes selected</AlertTitle>
-          <AlertDescription>
-            {selectedShapes.length} shape{selectedShapes.length > 1 ? "s" : ""} selected. Choose a fabric to apply.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Fixed height alert container to prevent layout shifts */}
+      <div className="h-[80px] mb-4">
+        {selectedShapes.length === 0 ? (
+          <Alert>
+            <AlertTitle>No shapes selected</AlertTitle>
+            <AlertDescription>
+              Please select one or more shapes in the pattern before choosing a fabric.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Alert>
+            <AlertTitle>Shapes selected</AlertTitle>
+            <AlertDescription>
+              {selectedShapes.length} shape{selectedShapes.length > 1 ? "s" : ""} selected. Choose a fabric to apply.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
         {Object.entries(FABRIC_TEXTURES).map(([key, src]) => (
