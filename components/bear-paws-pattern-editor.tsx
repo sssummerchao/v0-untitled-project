@@ -1,103 +1,85 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Shuffle } from "lucide-react"
+import { Shuffle, Download } from "lucide-react"
 import FabricSelector, { FABRIC_TEXTURES } from "./fabric-selector"
+
+// Import the working download function
+import { downloadWithHtmlToImage } from "@/utils/html-to-image-download"
 
 export default function BearPawsPatternEditor() {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
+  const [isDownloading, setIsDownloading] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
 
-  // Define the shapes for the bear paws pattern based on the SVG
+  // Define the shapes for the bear paws pattern based on the new SVG
   const shapes = [
     // Center square
-    { id: "center-square", type: "rect", x: 175.445, y: 176.531, width: 60, height: 59 },
+    { id: "center-square", type: "rect", x: 462.86, y: 462.86, width: 154.29, height: 154.29 },
+
+    // Four paw squares
+    { id: "top-left-paw", type: "rect", x: 154.29, y: 154.29, width: 308.57, height: 308.57 },
+    { id: "bottom-left-paw", type: "rect", x: 154.29, y: 617.14, width: 308.57, height: 308.57 },
+    { id: "top-right-paw", type: "rect", x: 617.14, y: 154.29, width: 308.57, height: 308.57 },
+    { id: "bottom-right-paw", type: "rect", x: 617.14, y: 617.14, width: 308.57, height: 308.57 },
+
+    // Top-left paw triangles
+    { id: "tl-triangle-1", type: "polygon", points: "308.57,154.29 154.29,154.29 154.29,0 308.57,154.29" },
+    { id: "tl-triangle-2", type: "polygon", points: "154.29,0 308.57,0 308.57,154.29 154.29,0" },
+    { id: "tl-triangle-3", type: "polygon", points: "308.57,0 462.86,0 462.86,154.29 308.57,0" },
+    { id: "tl-triangle-4", type: "polygon", points: "462.86,154.29 308.57,154.29 308.57,0 462.86,154.29" },
+    { id: "tl-triangle-5", type: "polygon", points: "0,154.29 154.29,154.29 154.29,308.57 0,154.29" },
+    { id: "tl-triangle-6", type: "polygon", points: "0,308.57 154.29,308.57 154.29,462.86 0,308.57" },
+
+    // Top-right paw triangles
+    { id: "tr-triangle-1", type: "polygon", points: "925.71,308.57 925.71,154.29 1080,154.29 925.71,308.57" },
+    { id: "tr-triangle-2", type: "polygon", points: "925.71,462.86 925.71,308.57 1080,308.57 925.71,462.86" },
+    { id: "tr-triangle-3", type: "polygon", points: "925.71,0 925.71,154.29 771.43,154.29 925.71,0" },
+    { id: "tr-triangle-4", type: "polygon", points: "771.43,0 771.43,154.29 617.14,154.29 771.43,0" },
+    { id: "tr-triangle-5", type: "polygon", points: "617.14,154.29 617.14,0 771.43,0 617.14,154.29" },
+    { id: "tr-triangle-6", type: "polygon", points: "771.43,154.29 771.43,0 925.71,0 771.43,154.29" },
+
+    // Bottom-right paw triangles
+    { id: "br-triangle-1", type: "polygon", points: "771.43,925.71 925.71,925.71 925.71,1080 771.43,925.71" },
+    { id: "br-triangle-2", type: "polygon", points: "617.14,925.71 771.43,925.71 771.43,1080 617.14,925.71" },
+    { id: "br-triangle-3", type: "polygon", points: "1080,925.71 925.71,925.71 925.71,771.43 1080,925.71" },
+    { id: "br-triangle-4", type: "polygon", points: "1080,771.43 925.71,771.43 925.71,617.14 1080,771.43" },
+    { id: "br-triangle-5", type: "polygon", points: "925.71,1080 771.43,1080 771.43,925.71 925.71,1080" },
+    { id: "br-triangle-6", type: "polygon", points: "771.43,1080 617.14,1080 617.14,925.71 771.43,1080" },
+
+    // Bottom-left paw triangles
+    { id: "bl-triangle-1", type: "polygon", points: "154.29,771.43 154.29,925.71 0,925.71 154.29,771.43" },
+    { id: "bl-triangle-2", type: "polygon", points: "154.29,617.14 154.29,771.43 0,771.43 154.29,617.14" },
+    { id: "bl-triangle-3", type: "polygon", points: "154.29,1080 154.29,925.71 308.57,925.71 154.29,1080" },
+    { id: "bl-triangle-4", type: "polygon", points: "308.57,1080 308.57,925.71 462.86,925.71 308.57,1080" },
+    { id: "bl-triangle-5", type: "polygon", points: "462.86,925.71 462.86,1080 308.57,1080 462.86,925.71" },
+    { id: "bl-triangle-6", type: "polygon", points: "308.57,925.71 308.57,1080 154.29,1080 308.57,925.71" },
 
     // Corner squares
-    { id: "bottom-left-square", type: "rect", x: 3.44531, y: 352.531, width: 56, height: 57 },
-    { id: "bottom-right-square", type: "rect", x: 351.445, y: 352.531, width: 58, height: 57 },
-    { id: "top-right-square", type: "rect", x: 351.445, y: 3.53125, width: 58, height: 57 },
-    { id: "top-left-square", type: "rect", x: 2.44531, y: 3.53125, width: 58, height: 57 },
+    { id: "top-left-corner", type: "rect", x: 0, y: 0, width: 154.29, height: 154.29 },
+    { id: "top-right-corner", type: "rect", x: 925.71, y: 0, width: 154.29, height: 154.29 },
+    { id: "bottom-right-corner", type: "rect", x: 925.71, y: 925.71, width: 154.29, height: 154.29 },
+    { id: "bottom-left-corner", type: "rect", x: 0, y: 925.71, width: 154.29, height: 154.29 },
 
-    // Triangular paths - top left paw
-    { id: "top-left-1", type: "path", d: "M117.945 60.0312L59.9453 60.0313L59.9453 2.03125L117.945 60.0312Z" },
-    { id: "top-left-2", type: "path", d: "M60.9453 119.031L2.94532 119.031L2.94531 61.0312L60.9453 119.031Z" },
-    { id: "top-left-3", type: "path", d: "M60.9453 3.04297L118.945 3.04297L118.945 61.043L60.9453 3.04297Z" },
-    { id: "top-left-4", type: "path", d: "M1.94531 60.0312L59.9453 60.0313L59.9453 118.031L1.94531 60.0312Z" },
-    { id: "top-left-5", type: "path", d: "M1.94531 118.031L59.9453 118.031L59.9453 176.031L1.94531 118.031Z" },
-    { id: "top-left-6", type: "path", d: "M175.945 60.0312L117.945 60.0313L117.945 2.03125L175.945 60.0312Z" },
-    { id: "top-left-rect", type: "rect", x: 60.4453, y: 60.5312, width: 115, height: 116 },
+    // Connecting rectangles
+    { id: "top-connect", type: "rect", x: 462.86, y: 0, width: 154.29, height: 462.86 },
+    { id: "right-connect", type: "rect", x: 617.14, y: 462.86, width: 462.86, height: 154.29 },
+    { id: "bottom-connect", type: "rect", x: 462.86, y: 617.14, width: 154.29, height: 462.86 },
+    { id: "left-connect", type: "rect", x: 0, y: 462.86, width: 462.86, height: 154.29 },
 
-    // Triangular paths - top right paw
-    { id: "top-right-1", type: "path", d: "M409.945 60.043L409.945 118.043L351.945 118.043L409.945 60.043Z" },
-    { id: "top-right-2", type: "path", d: "M293.945 61V3.00001H351.945L293.945 61Z" },
-    { id: "top-right-3", type: "path", d: "M351.945 118.531L351.945 60.5313L409.945 60.5313L351.945 118.531Z" },
-    { id: "top-right-4", type: "path", d: "M351.945 2.53125L351.945 60.5313L293.945 60.5312L351.945 2.53125Z" },
-    { id: "top-right-5", type: "path", d: "M293.945 2.53125L293.945 60.5313L235.945 60.5312L293.945 2.53125Z" },
-    { id: "top-right-6", type: "path", d: "M351.945 176.531L351.945 118.531L409.945 118.531L351.945 176.531Z" },
-    {
-      id: "top-right-rect",
-      type: "rect",
-      x: 351.445,
-      y: 61.0312,
-      width: 115,
-      height: 116,
-      transform: "rotate(90 351.445 61.0312)",
-    },
+    // Additional triangles for connecting areas
+    { id: "left-connect-1", type: "polygon", points: "0,925.71 0,771.43 154.29,771.43 0,925.71" },
+    { id: "left-connect-2", type: "polygon", points: "0,771.43 0,617.14 154.29,617.14 0,771.43" },
+    { id: "left-connect-3", type: "polygon", points: "154.29,462.86 0,462.86 0,308.57 154.29,462.86" },
+    { id: "left-connect-4", type: "polygon", points: "154.29,308.57 0,308.57 0,154.29 154.29,308.57" },
 
-    // Triangular paths - bottom right paw
-    { id: "bottom-right-1", type: "path", d: "M350.945 294L408.945 294L408.945 352L350.945 294Z" },
-    { id: "bottom-right-2", type: "path", d: "M351.945 410L293.945 410L293.945 352L351.945 410Z" },
-    { id: "bottom-right-3", type: "path", d: "M293.445 352.031L351.445 352.031L351.445 410.031L293.445 352.031Z" },
-    { id: "bottom-right-4", type: "path", d: "M409.445 352.031L351.445 352.031L351.445 294.031L409.445 352.031Z" },
-    { id: "bottom-right-5", type: "path", d: "M409.445 294.031L351.445 294.031L351.445 236.031L409.445 294.031Z" },
-    { id: "bottom-right-6", type: "path", d: "M235.445 352.031L293.445 352.031L293.445 410.031L235.445 352.031Z" },
-    {
-      id: "bottom-right-rect",
-      type: "rect",
-      x: 350.945,
-      y: 351.531,
-      width: 115,
-      height: 116,
-      transform: "rotate(-180 350.945 351.531)",
-    },
-
-    // Triangular paths - bottom left paw
-    { id: "bottom-left-1", type: "path", d: "M116.945 352L116.945 410L58.9453 410L116.945 352Z" },
-    { id: "bottom-left-2", type: "path", d: "M2 352L2 294H60L2 352Z" },
-    {
-      id: "bottom-left-3",
-      type: "path",
-      d: "M59.4453 294.031L59.4453 352.031L1.44531 352.031L59.4453 294.031Z",
-    },
-    { id: "bottom-left-4", type: "path", d: "M59.4453 410.031V352.031H117.445L59.4453 410.031Z" },
-    { id: "bottom-left-5", type: "path", d: "M117.445 410.031V352.031H175.445L117.445 410.031Z" },
-    { id: "bottom-left-6", type: "path", d: "M59.4453 236.031L59.4453 294.031L1.44531 294.031L59.4453 236.031Z" },
-    {
-      id: "bottom-left-rect",
-      type: "rect",
-      x: 59.9453,
-      y: 351.531,
-      width: 115,
-      height: 116,
-      transform: "rotate(-90 59.9453 351.531)",
-    },
-
-    // Large connecting paths
-    { id: "left-connect", type: "path", d: "M3 292V118.5L60 176.5H175V236H60L3 292Z" },
-    {
-      id: "bottom-connect",
-      type: "path",
-      d: "M291 409L118 409L175.833 351.669L175.833 236L235.161 236L235.161 351.669L291 409Z",
-    },
-    { id: "right-connect", type: "path", d: "M408 120L408 293.5L351 235.5L236 235.5L236 176L351 176L408 120Z" },
-    {
-      id: "top-connect",
-      type: "path",
-      d: "M120 2.99999L294 3L235.833 60.3314L235.833 176L176.161 176L176.161 60.3314L120 2.99999Z",
-    },
+    // Right connect triangles
+    { id: "right-connect-1", type: "polygon", points: "1080,154.29 1080,308.57 925.71,308.57 1080,154.29" },
+    { id: "right-connect-2", type: "polygon", points: "1080,308.57 1080,462.86 925.71,462.86 1080,308.57" },
+    { id: "right-connect-3", type: "polygon", points: "925.71,617.14 1080,617.14 1080,771.43 925.71,617.14" },
+    { id: "right-connect-4", type: "polygon", points: "925.71,771.43 1080,771.43 1080,925.71 925.71,771.43" },
   ]
 
   // Handle shape selection
@@ -149,7 +131,24 @@ export default function BearPawsPatternEditor() {
     setSelectedShapes([])
   }
 
-  // Helper function to create SVG elements based on shape type
+  // Download the current pattern
+  const handleDownload = async () => {
+    if (!svgRef.current) return
+
+    setIsDownloading(true)
+    try {
+      await downloadWithHtmlToImage(svgRef.current, "bear-paws-quilt")
+    } catch (error) {
+      console.error("Error downloading pattern:", error)
+      alert("Failed to download pattern. Please try again.")
+    } finally {
+      setTimeout(() => {
+        setIsDownloading(false)
+      }, 1000) // Add a small delay to prevent rapid clicking
+    }
+  }
+
+  // Helper function to render the appropriate shape
   const renderShape = (shape: any) => {
     if (shape.type === "rect") {
       return (
@@ -158,7 +157,6 @@ export default function BearPawsPatternEditor() {
           y={shape.y}
           width={shape.width}
           height={shape.height}
-          transform={shape.transform}
           fill={
             selectedShapes.includes(shape.id)
               ? shape.id in shapeImages
@@ -168,14 +166,16 @@ export default function BearPawsPatternEditor() {
           }
           stroke={shape.id in shapeImages ? "none" : selectedShapes.includes(shape.id) ? "#000000" : "#D0D0D0"}
           strokeWidth={selectedShapes.includes(shape.id) ? "2" : "1"}
+          strokeLinejoin="miter"
+          paintOrder="stroke fill"
           onClick={() => handleShapeClick(shape.id)}
           className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
         />
       )
-    } else if (shape.type === "path") {
+    } else if (shape.type === "polygon") {
       return (
-        <path
-          d={shape.d}
+        <polygon
+          points={shape.points}
           fill={
             selectedShapes.includes(shape.id)
               ? shape.id in shapeImages
@@ -185,6 +185,8 @@ export default function BearPawsPatternEditor() {
           }
           stroke={shape.id in shapeImages ? "none" : selectedShapes.includes(shape.id) ? "#000000" : "#D0D0D0"}
           strokeWidth={selectedShapes.includes(shape.id) ? "2" : "1"}
+          strokeLinejoin="miter"
+          paintOrder="stroke fill"
           onClick={() => handleShapeClick(shape.id)}
           className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
         />
@@ -199,43 +201,26 @@ export default function BearPawsPatternEditor() {
         <div className="border border-gray-300 rounded-lg overflow-hidden">
           <svg
             ref={svgRef}
-            width="412"
-            height="412"
-            viewBox="0 0 412 412"
+            width="408"
+            height="408"
+            viewBox="0 0 1080 1080"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             style={{ background: "white" }}
           >
-            <rect
-              x="0"
-              y="0"
-              width="412"
-              height="412"
-              rx="4.28915"
-              fill="white"
-              stroke="#C7C7C7"
-              strokeWidth="1.51382"
-            />
-
             {/* Define clip paths for each shape */}
             <defs>
               {shapes.map((shape) => {
                 if (shape.type === "rect") {
                   return (
                     <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                      <rect
-                        x={shape.x}
-                        y={shape.y}
-                        width={shape.width}
-                        height={shape.height}
-                        transform={shape.transform}
-                      />
+                      <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
                     </clipPath>
                   )
-                } else if (shape.type === "path") {
+                } else if (shape.type === "polygon") {
                   return (
                     <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                      <path d={shape.d} />
+                      <polygon points={shape.points} />
                     </clipPath>
                   )
                 }
@@ -243,17 +228,18 @@ export default function BearPawsPatternEditor() {
               })}
             </defs>
 
-            {/* Render shapes with images if available */}
+            {/* Shapes */}
             {shapes.map((shape) => (
               <g key={shape.id}>
                 {/* If this shape has an image, show it clipped to the shape */}
                 {shape.id in shapeImages && (
                   <image
                     href={shapeImages[shape.id]}
-                    width="412"
-                    height="412"
+                    width="1080"
+                    height="1080"
                     preserveAspectRatio="xMidYMid slice"
                     clipPath={`url(#clip-${shape.id})`}
+                    crossOrigin="anonymous"
                   />
                 )}
 
@@ -266,12 +252,11 @@ export default function BearPawsPatternEditor() {
                         y={shape.y}
                         width={shape.width}
                         height={shape.height}
-                        transform={shape.transform}
                         fill="white"
                         opacity="0.5"
                       />
                     ) : (
-                      <path d={shape.d} fill="white" opacity="0.5" />
+                      <polygon points={shape.points} fill="white" opacity="0.5" />
                     )}
                   </>
                 )}
@@ -323,6 +308,17 @@ export default function BearPawsPatternEditor() {
               <Shuffle size={16} className="text-black" />
             </div>
             <span className="text-lg font-serif font-bold">Random Fill</span>
+          </button>
+
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            <div className="bg-gray-200 rounded-full p-2 mr-3">
+              <Download size={16} className="text-black" />
+            </div>
+            <span className="text-lg font-serif font-bold">{isDownloading ? "Generating..." : "Download PNG"}</span>
           </button>
         </div>
       </div>

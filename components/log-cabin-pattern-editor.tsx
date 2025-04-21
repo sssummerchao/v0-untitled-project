@@ -1,35 +1,33 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Shuffle } from "lucide-react"
+import { Shuffle, Download } from "lucide-react"
 import FabricSelector, { FABRIC_TEXTURES } from "./fabric-selector"
+// Import the working download function
+import { downloadWithHtmlToImage } from "@/utils/html-to-image-download"
 
 export default function LogCabinPatternEditor() {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
   const svgRef = useRef<SVGSVGElement>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
 
-  // Define the shapes for the log cabin pattern based on the SVG
+  // Define the shapes for the log cabin pattern based on the new SVG
   const shapes = [
-    // Top horizontal rectangles
-    { id: "top-outer", x: 0.5, y: 0.5, width: 327, height: 79 },
-    { id: "top-inner", x: 80.5, y: 80.5, width: 167, height: 79 },
-
-    // Right vertical rectangles
-    { id: "right-inner", x: 248.5, y: 80.5, width: 79, height: 166 },
-    { id: "right-outer", x: 328.5, y: 0.5, width: 79, height: 325 },
-
-    // Bottom horizontal rectangles
-    { id: "bottom-inner", x: 160.5, y: 246.5, width: 167, height: 79 },
-    { id: "bottom-outer", x: 80.5, y: 326.5, width: 327, height: 79 },
-
-    // Left vertical rectangles
-    { id: "left-inner", x: 80.5, y: 160.5, width: 79, height: 166 },
-    { id: "left-outer", x: 0.5, y: 80.5, width: 79, height: 325 },
-
-    // Center square (not explicitly shown in SVG but implied)
-    { id: "center", x: 160.5, y: 160.5, width: 87, height: 85 },
+    { id: "top-outer", type: "rect", x: 0, y: 0, width: 946, height: 135 },
+    { id: "right-outer", type: "rect", x: 946, y: 0, width: 134, height: 1080 },
+    { id: "left-outer", type: "rect", x: 0, y: 135, width: 136, height: 945 },
+    { id: "bottom-outer", type: "rect", x: 136, y: 945, width: 810, height: 135 },
+    { id: "top-inner", type: "rect", x: 136, y: 135, width: 675, height: 135 },
+    { id: "right-inner", type: "rect", x: 811, y: 135, width: 135, height: 810 },
+    { id: "left-inner", type: "rect", x: 136, y: 270, width: 135, height: 675 },
+    { id: "bottom-inner", type: "rect", x: 271, y: 810, width: 540, height: 135 },
+    { id: "left-inner-2", type: "rect", x: 271, y: 405, width: 135, height: 405 },
+    { id: "top-inner-2", type: "rect", x: 271, y: 270, width: 405, height: 135 },
+    { id: "right-inner-2", type: "rect", x: 676, y: 270, width: 135, height: 540 },
+    { id: "bottom-inner-2", type: "rect", x: 406, y: 675, width: 270, height: 135 },
+    { id: "center", type: "rect", x: 406, y: 405, width: 270, height: 270 },
   ]
 
   // Handle shape selection
@@ -81,6 +79,24 @@ export default function LogCabinPatternEditor() {
     setSelectedShapes([])
   }
 
+  // Replace the handleDownload function with this:
+  // Download the current pattern
+  const handleDownload = async () => {
+    if (!svgRef.current) return
+
+    setIsDownloading(true)
+    try {
+      await downloadWithHtmlToImage(svgRef.current, "log-cabin-quilt")
+    } catch (error) {
+      console.error("Error downloading pattern:", error)
+      alert("Failed to download pattern. Please try again.")
+    } finally {
+      setTimeout(() => {
+        setIsDownloading(false)
+      }, 1000) // Add a small delay to prevent rapid clicking
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       <div className="flex flex-col items-center gap-6">
@@ -89,22 +105,11 @@ export default function LogCabinPatternEditor() {
             ref={svgRef}
             width="408"
             height="408"
-            viewBox="0 0 408 408"
+            viewBox="0 0 1080 1080"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             style={{ background: "white" }}
           >
-            <rect
-              x="0.756909"
-              y="0.756909"
-              width="406.486"
-              height="406.486"
-              rx="4.28915"
-              fill="white"
-              stroke="#C7C7C7"
-              strokeWidth="1.51382"
-            />
-
             {/* Define clip paths for each shape */}
             <defs>
               {shapes.map((shape) => (
@@ -121,8 +126,8 @@ export default function LogCabinPatternEditor() {
                 {shape.id in shapeImages && (
                   <image
                     href={shapeImages[shape.id]}
-                    width="408"
-                    height="408"
+                    width="1080"
+                    height="1080"
                     preserveAspectRatio="xMidYMid slice"
                     clipPath={`url(#clip-${shape.id})`}
                   />
@@ -148,6 +153,8 @@ export default function LogCabinPatternEditor() {
                   }
                   stroke={shape.id in shapeImages ? "none" : selectedShapes.includes(shape.id) ? "#000000" : "#D0D0D0"}
                   strokeWidth={selectedShapes.includes(shape.id) ? "2" : "1"}
+                  strokeLinejoin="miter"
+                  paintOrder="stroke fill"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                 />
@@ -196,6 +203,17 @@ export default function LogCabinPatternEditor() {
               <Shuffle size={16} className="text-black" />
             </div>
             <span className="text-lg font-serif font-bold">Random Fill</span>
+          </button>
+
+          <button
+            onClick={handleDownload}
+            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity"
+          >
+            <div className="bg-gray-200 rounded-full p-2 mr-3">
+              <Download size={16} className="text-black" />
+            </div>
+            {/* Update the download button text */}
+            <span className="text-lg font-serif font-bold">{isDownloading ? "Generating..." : "Download PNG"}</span>
           </button>
         </div>
       </div>

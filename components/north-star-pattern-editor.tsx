@@ -1,113 +1,50 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Shuffle } from "lucide-react"
+import { downloadWithHtmlToImage } from "@/utils/html-to-image-download"
+import { Shuffle, Download } from "lucide-react"
 import FabricSelector, { FABRIC_TEXTURES } from "./fabric-selector"
 
 export default function NorthStarPatternEditor() {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
+  const [isDownloading, setIsDownloading] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
 
-  // Grid size
-  const gridSize = 4
-  const cellSize = 100
-  const totalSize = gridSize * cellSize
+  // Update the shapes array to match the new SVG structure
+  const shapes = [
+    // Triangles
+    { id: "triangle-1", type: "polygon", points: "271,270 271,0 541,270" },
+    { id: "triangle-2", type: "polygon", points: "541,0 541,270 271,0" },
+    { id: "triangle-3", type: "polygon", points: "541,0 541,270 811,0" },
+    { id: "triangle-4", type: "polygon", points: "541,1080 541,810 811,1080" },
+    { id: "triangle-5", type: "polygon", points: "541,1080 541,810 271,1080" },
+    { id: "triangle-6", type: "polygon", points: "1080,540 811,540 1080,810" },
+    { id: "triangle-7", type: "polygon", points: "1080,540 811,540 1080,270" },
+    { id: "triangle-8", type: "polygon", points: "0,540 271,540 0,810" },
+    { id: "triangle-9", type: "polygon", points: "271,270 0,270 271,540" },
+    { id: "triangle-10", type: "polygon", points: "811,270 811,0 541,270" },
+    { id: "triangle-11", type: "polygon", points: "811,270 1080,270 811,540" },
+    { id: "triangle-12", type: "polygon", points: "811,810 1080,810 811,540" },
+    { id: "triangle-13", type: "polygon", points: "271,810 0,810 271,540" },
+    { id: "triangle-14", type: "polygon", points: "0,540 271,540 0,270" },
+    { id: "triangle-15", type: "polygon", points: "811,810 811,1080 541,810" },
+    { id: "triangle-16", type: "polygon", points: "271,810 271,1080 541,810" },
 
-  // Define the specific pattern layout
-  const patternLayout = [
-    ["empty", "\\", "/", "empty"],
-    ["\\", "empty", "empty", "/"],
-    ["/", "empty", "empty", "\\"],
-    ["empty", "/", "\\", "empty"],
+    // Center square
+    { id: "center-square", type: "rect", x: 271, y: 270, width: 540, height: 540 },
+
+    // Corner shapes
+    { id: "top-left-square", type: "polygon", points: "271,270 0,270 1,0 271,0" },
+    { id: "top-right-square", type: "rect", x: 811, y: 0, width: 269, height: 270 },
+    { id: "bottom-right-square", type: "rect", x: 811, y: 810, width: 269, height: 270 },
+    { id: "bottom-left-square", type: "rect", x: 0, y: 810, width: 271, height: 270 },
   ]
-
-  // Generate shapes for the pattern
-  const shapes = []
-
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      // Get the diagonal type from the layout
-      const diagonalType = patternLayout[row][col]
-
-      // Calculate coordinates
-      const x = col * cellSize
-      const y = row * cellSize
-
-      // Each cell has a unique ID
-      const cellId = `${row}-${col}`
-
-      if (diagonalType === "\\") {
-        // Top-left to bottom-right diagonal (\)
-        const topTriangleId = `${row}-${col}-top`
-        const bottomTriangleId = `${row}-${col}-bottom`
-
-        shapes.push({
-          id: topTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x + cellSize},${y} ${x + cellSize},${y + cellSize}`,
-          isSelected: selectedShapes.includes(topTriangleId),
-          hasImage: topTriangleId in shapeImages,
-        })
-        shapes.push({
-          id: bottomTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x},${y + cellSize} ${x + cellSize},${y + cellSize}`,
-          isSelected: selectedShapes.includes(bottomTriangleId),
-          hasImage: bottomTriangleId in shapeImages,
-        })
-      } else if (diagonalType === "/") {
-        // Top-right to bottom-left diagonal (/)
-        const topTriangleId = `${row}-${col}-top`
-        const bottomTriangleId = `${row}-${col}-bottom`
-
-        shapes.push({
-          id: topTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x + cellSize},${y} ${x},${y + cellSize}`,
-          isSelected: selectedShapes.includes(topTriangleId),
-          hasImage: topTriangleId in shapeImages,
-        })
-        shapes.push({
-          id: bottomTriangleId,
-          type: "triangle",
-          points: `${x + cellSize},${y} ${x + cellSize},${y + cellSize} ${x},${y + cellSize}`,
-          isSelected: selectedShapes.includes(bottomTriangleId),
-          hasImage: bottomTriangleId in shapeImages,
-        })
-      } else {
-        // Empty cell - add as a square shape
-        shapes.push({
-          id: cellId,
-          type: "square",
-          x: x,
-          y: y,
-          width: cellSize,
-          height: cellSize,
-          isSelected: selectedShapes.includes(cellId),
-          hasImage: cellId in shapeImages,
-        })
-      }
-    }
-  }
-
-  // Sort shapes to bring selected ones to the front
-  const sortedShapes = [...shapes].sort((a, b) => {
-    if (a.isSelected && !b.isSelected) return 1 // Selected shapes go last (rendered on top)
-    if (!a.isSelected && b.isSelected) return -1 // Non-selected shapes go first
-    return 0 // Keep original order for shapes with same selection state
-  })
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
-    // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
-  }
-
-  // Clear all selections
-  const clearSelections = () => {
-    setSelectedShapes([])
   }
 
   // Apply fabric to selected shapes
@@ -154,74 +91,122 @@ export default function NorthStarPatternEditor() {
     setSelectedShapes([])
   }
 
+  // Download the current pattern
+  const handleDownload = async () => {
+    if (!svgRef.current) return
+
+    setIsDownloading(true)
+    try {
+      await downloadWithHtmlToImage(svgRef.current, "north-star-quilt")
+    } catch (error) {
+      console.error("Error downloading pattern:", error)
+      alert("Failed to download pattern. Please try again.")
+    } finally {
+      setTimeout(() => {
+        setIsDownloading(false)
+      }, 1000) // Add a small delay to prevent rapid clicking
+    }
+  }
+
+  // Helper function to render the appropriate shape
+  const renderShape = (shape: any) => {
+    if (shape.type === "rect") {
+      return (
+        <rect
+          x={shape.x}
+          y={shape.y}
+          width={shape.width}
+          height={shape.height}
+          fill={
+            selectedShapes.includes(shape.id)
+              ? shape.id in shapeImages
+                ? "transparent"
+                : "rgba(0,0,0,0.1)"
+              : "transparent"
+          }
+          stroke={shape.id in shapeImages ? "none" : selectedShapes.includes(shape.id) ? "#000000" : "#D0D0D0"}
+          strokeWidth={selectedShapes.includes(shape.id) ? "2" : "1"}
+          strokeLinejoin="miter"
+          paintOrder="stroke fill"
+          onClick={() => handleShapeClick(shape.id)}
+          className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+        />
+      )
+    } else if (shape.type === "polygon") {
+      return (
+        <polygon
+          points={shape.points}
+          fill={
+            selectedShapes.includes(shape.id)
+              ? shape.id in shapeImages
+                ? "transparent"
+                : "rgba(0,0,0,0.1)"
+              : "transparent"
+          }
+          stroke={shape.id in shapeImages ? "none" : selectedShapes.includes(shape.id) ? "#000000" : "#D0D0D0"}
+          strokeWidth={selectedShapes.includes(shape.id) ? "2" : "1"}
+          strokeLinejoin="miter"
+          paintOrder="stroke fill"
+          onClick={() => handleShapeClick(shape.id)}
+          className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+        />
+      )
+    }
+    return null
+  }
+
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
       <div className="flex flex-col items-center gap-6">
         <div className="border border-gray-300 rounded-lg overflow-hidden">
           <svg
             ref={svgRef}
-            width={totalSize}
-            height={totalSize}
-            viewBox={`0 0 ${totalSize} ${totalSize}`}
+            width="408"
+            height="408"
+            viewBox="0 0 1080 1080"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
             style={{ background: "white" }}
           >
             {/* Define clip paths for each shape */}
             <defs>
-              {shapes.map((shape) => (
-                <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                  {shape.type === "triangle" ? (
-                    <polygon points={shape.points} />
-                  ) : (
-                    <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
-                  )}
-                </clipPath>
-              ))}
+              {shapes.map((shape) => {
+                if (shape.type === "rect") {
+                  return (
+                    <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
+                      <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
+                    </clipPath>
+                  )
+                } else if (shape.type === "polygon") {
+                  return (
+                    <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
+                      <polygon points={shape.points} />
+                    </clipPath>
+                  )
+                }
+                return null
+              })}
             </defs>
 
-            {/* Grid lines */}
-            {Array.from({ length: gridSize + 1 }).map((_, index) => (
-              <line
-                key={`vertical-${index}`}
-                x1={index * cellSize}
-                y1={0}
-                x2={index * cellSize}
-                y2={totalSize}
-                stroke="#D0D0D0"
-                strokeWidth="1"
-              />
-            ))}
-            {Array.from({ length: gridSize + 1 }).map((_, index) => (
-              <line
-                key={`horizontal-${index}`}
-                x1={0}
-                y1={index * cellSize}
-                x2={totalSize}
-                y2={index * cellSize}
-                stroke="#D0D0D0"
-                strokeWidth="1"
-              />
-            ))}
-
             {/* Shapes */}
-            {sortedShapes.map((shape) => (
+            {shapes.map((shape) => (
               <g key={shape.id}>
                 {/* If this shape has an image, show it clipped to the shape */}
-                {shape.hasImage && (
+                {shape.id in shapeImages && (
                   <image
                     href={shapeImages[shape.id]}
-                    width={totalSize}
-                    height={totalSize}
+                    width="1080"
+                    height="1080"
                     preserveAspectRatio="xMidYMid slice"
                     clipPath={`url(#clip-${shape.id})`}
+                    crossOrigin="anonymous"
                   />
                 )}
 
                 {/* Selection overlay - show when shape is selected */}
-                {shape.isSelected && (
+                {selectedShapes.includes(shape.id) && (
                   <>
-                    {shape.type === "triangle" ? (
-                      <polygon points={shape.points} fill="white" opacity="0.5" clipPath={`url(#clip-${shape.id})`} />
-                    ) : (
+                    {shape.type === "rect" ? (
                       <rect
                         x={shape.x}
                         y={shape.y}
@@ -230,35 +215,14 @@ export default function NorthStarPatternEditor() {
                         fill="white"
                         opacity="0.5"
                       />
+                    ) : (
+                      <polygon points={shape.points} fill="white" opacity="0.5" />
                     )}
                   </>
                 )}
 
                 {/* Shape outline and click area */}
-                {shape.type === "triangle" ? (
-                  <polygon
-                    points={shape.points}
-                    fill={shape.isSelected && !shape.hasImage ? "#666" : "transparent"}
-                    stroke={shape.isSelected ? "#000000" : "#D0D0D0"}
-                    strokeWidth={shape.isSelected ? "2" : "1"}
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                    style={{ fillOpacity: shape.isSelected && !shape.hasImage ? 0.5 : 0 }}
-                  />
-                ) : (
-                  <rect
-                    x={shape.x}
-                    y={shape.y}
-                    width={shape.width}
-                    height={shape.height}
-                    fill={shape.isSelected && !shape.hasImage ? "#666" : "transparent"}
-                    stroke={shape.isSelected ? "#000000" : "#D0D0D0"}
-                    strokeWidth={shape.isSelected ? "2" : "1"}
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                    style={{ fillOpacity: shape.isSelected && !shape.hasImage ? 0.3 : 0 }}
-                  />
-                )}
+                {renderShape(shape)}
               </g>
             ))}
           </svg>
@@ -304,6 +268,17 @@ export default function NorthStarPatternEditor() {
               <Shuffle size={16} className="text-black" />
             </div>
             <span className="text-lg font-serif font-bold">Random Fill</span>
+          </button>
+
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            <div className="bg-gray-200 rounded-full p-2 mr-3">
+              <Download size={16} className="text-black" />
+            </div>
+            <span className="text-lg font-serif font-bold">{isDownloading ? "Generating..." : "Download PNG"}</span>
           </button>
         </div>
       </div>
