@@ -2,154 +2,164 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+
+// Import the fabric textures and names from the main component
 import {
   FABRIC_TEXTURES,
   FABRIC_NAMES,
-  TEACHABLE_MACHINE_URL,
+  ALL_FABRIC_KEYS,
   FABRIC_CLASS_MAPPING,
-  STORAGE_KEYS,
+  TEACHABLE_MACHINE_URL,
 } from "./fabric-constants"
-import DrawingModeToggle from "./drawing-mode-toggle"
 
-// Featured fabrics to display in the samples section
-const FEATURED_FABRICS = ["fabric13", "fabric1", "fabric3"]
-
-// Filter to only include fabric1 through fabric18 for high-quality fabrics
-const HIGH_QUALITY_FABRIC_KEYS = Array.from({ length: 18 }, (_, i) => `fabric${i + 1}`)
-
-// Add this to the interface
-interface FabricRecognitionProps {
-  onFabricSelect: (shape: string, fabricPath: string) => void
+// Update the interface to include svgRef
+interface CrossroadsSvgPatternProps {
+  onFabricSelect?: (shape: string, fabricPath: string) => void
   svgRef?: React.RefObject<SVGSVGElement>
-  isDrawingMode?: boolean
 }
 
 // Update the component to use the prop
-export default function FabricRecognition({
-  onFabricSelect,
-  svgRef: externalSvgRef,
-  isDrawingMode = false,
-}: FabricRecognitionProps) {
-  // Use the external svgRef if provided, otherwise use the internal one
-  const internalSvgRef = useRef<SVGSVGElement>(null)
-  const svgRef = externalSvgRef || internalSvgRef
-
+export default function CrossroadsSvgPattern({ onFabricSelect, svgRef }: CrossroadsSvgPatternProps) {
   // State for selected shapes and fabric images
-  const [selectedShapes, setSelectedShapes] = useState<string[]>(["0-1-top", "1-0-top", "2-3-bottom", "0-0"])
+  const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
   const [showCamera, setShowCamera] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [recognizedFabric, setRecognizedFabric] = useState<string | null>(null)
   const [isRecognizing, setIsRecognizing] = useState(false)
   const [recognitionMessage, setRecognitionMessage] = useState("")
-  // const [isDrawingMode, setIsDrawingMode] = useState(false)
 
   // Model-related state
   const [model, setModel] = useState<any>(null)
   const [isModelLoading, setIsModelLoading] = useState(false)
   const [modelError, setModelError] = useState<string | null>(null)
+  const modelLoadedRef = useRef(false)
 
   // Refs for video and canvas elements
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
-  // const svgRef = useRef<SVGSVGElement>(null)
 
-  // Grid size
-  const gridSize = 4
-  const cellSize = 125
-  const totalSize = gridSize * cellSize
-
-  // Define the specific pattern layout
-  const patternLayout = [
-    ["empty", "\\", "/", "empty"],
-    ["\\", "empty", "empty", "/"],
-    ["/", "empty", "empty", "\\"],
-    ["empty", "/", "\\", "empty"],
+  // Define the shapes for the Crossroads pattern
+  const shapes = [
+    // Center square
+    {
+      id: "center-square",
+      type: "rect",
+      clipPath: "clip-center-square",
+      x: 349.08,
+      y: 349.08,
+      width: 381.84,
+      height: 381.84,
+      transform: "rotate(-45 540 540)",
+    },
+    // Top-left square
+    {
+      id: "top-left-square",
+      type: "rect",
+      clipPath: "clip-top-left-square",
+      x: 79.08,
+      y: 79.08,
+      width: 381.84,
+      height: 381.84,
+      transform: "rotate(-45 270 270)",
+    },
+    // Top-right square
+    {
+      id: "top-right-square",
+      type: "rect",
+      clipPath: "clip-top-right-square",
+      x: 619.08,
+      y: 79.08,
+      width: 381.84,
+      height: 381.84,
+      transform: "rotate(-45 810 270)",
+    },
+    // Bottom-left square
+    {
+      id: "bottom-left-square",
+      type: "rect",
+      clipPath: "clip-bottom-left-square",
+      x: 79.08,
+      y: 619.08,
+      width: 381.84,
+      height: 381.84,
+      transform: "rotate(-45 270 810)",
+    },
+    // Bottom-right square
+    {
+      id: "bottom-right-square",
+      type: "rect",
+      clipPath: "clip-bottom-right-square",
+      x: 619.08,
+      y: 619.08,
+      width: 381.84,
+      height: 381.84,
+      transform: "rotate(-45 810 810)",
+    },
+    // Top triangle
+    {
+      id: "top-triangle",
+      type: "polygon",
+      clipPath: "clip-top-triangle",
+      points: "540,270 810,0 270,0",
+    },
+    // Top-right triangle
+    {
+      id: "top-right-triangle",
+      type: "polygon",
+      clipPath: "clip-top-right-triangle",
+      points: "810,0 1080,0 1080,270",
+    },
+    // Top-left triangle
+    {
+      id: "top-left-triangle",
+      type: "polygon",
+      clipPath: "clip-top-left-triangle",
+      points: "0,270 0,0 270,0",
+    },
+    // Bottom triangle
+    {
+      id: "bottom-triangle",
+      type: "polygon",
+      clipPath: "clip-bottom-triangle",
+      points: "540,810 270,1080 810,1080",
+    },
+    // Left triangle
+    {
+      id: "left-triangle",
+      type: "polygon",
+      clipPath: "clip-left-triangle",
+      points: "270,540 0,270 0,810",
+    },
+    // Right triangle
+    {
+      id: "right-triangle",
+      type: "polygon",
+      clipPath: "clip-right-triangle",
+      points: "810,540 1080,810 1080,270",
+    },
+    // Bottom-left triangle
+    {
+      id: "bottom-left-triangle",
+      type: "polygon",
+      clipPath: "clip-bottom-left-triangle",
+      points: "270,1080 0,1080 0,810",
+    },
+    // Bottom-right triangle
+    {
+      id: "bottom-right-triangle",
+      type: "polygon",
+      clipPath: "clip-bottom-right-triangle",
+      points: "1080,810 1080,1080 810,1080",
+    },
   ]
 
-  // Generate shapes for the pattern
-  const shapes = []
-
-  // Add this function to save fabric selections
-  const saveFabricSelections = (pattern, selections) => {
-    localStorage.setItem(STORAGE_KEYS[pattern], JSON.stringify(selections))
-  }
-
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      // Get the diagonal type from the layout
-      const diagonalType = patternLayout[row][col]
-
-      // Calculate coordinates
-      const x = col * cellSize
-      const y = row * cellSize
-
-      // Each cell has a unique ID
-      const cellId = `${row}-${col}`
-
-      if (diagonalType === "\\") {
-        // Top-left to bottom-right diagonal (\)
-        const topTriangleId = `${row}-${col}-top`
-        const bottomTriangleId = `${row}-${col}-bottom`
-
-        shapes.push({
-          id: topTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x + cellSize},${y} ${x + cellSize},${y + cellSize}`,
-          isSelected: selectedShapes.includes(topTriangleId),
-          hasImage: topTriangleId in shapeImages,
-        })
-        shapes.push({
-          id: bottomTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x},${y + cellSize} ${x + cellSize},${y + cellSize}`,
-          isSelected: selectedShapes.includes(bottomTriangleId),
-          hasImage: bottomTriangleId in shapeImages,
-        })
-      } else if (diagonalType === "/") {
-        // Top-right to bottom-left diagonal (/)
-        const topTriangleId = `${row}-${col}-top`
-        const bottomTriangleId = `${row}-${col}-bottom`
-
-        shapes.push({
-          id: topTriangleId,
-          type: "triangle",
-          points: `${x},${y} ${x + cellSize},${y} ${x},${y + cellSize}`,
-          isSelected: selectedShapes.includes(topTriangleId),
-          hasImage: topTriangleId in shapeImages,
-        })
-        shapes.push({
-          id: bottomTriangleId,
-          type: "triangle",
-          points: `${x + cellSize},${y} ${x + cellSize},${y + cellSize} ${x},${y + cellSize}`,
-          isSelected: selectedShapes.includes(bottomTriangleId),
-          hasImage: bottomTriangleId in shapeImages,
-        })
-      } else {
-        // Empty cell - add as a square shape
-        shapes.push({
-          id: cellId,
-          type: "square",
-          x: x,
-          y: y,
-          width: cellSize,
-          height: cellSize,
-          isSelected: selectedShapes.includes(cellId),
-          hasImage: cellId in shapeImages,
-        })
-      }
-    }
-  }
-
-  // Update the handleShapeClick function to check isDrawingMode
+  // Handle shape selection
   const handleShapeClick = (id: string) => {
-    // Only allow shape selection when not in drawing mode
-    if (isDrawingMode) return
-
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
   }
@@ -185,24 +195,21 @@ export default function FabricRecognition({
       // Ensure the video element exists before setting srcObject
       console.log("Video ref status:", videoRef.current ? "exists" : "null")
 
-      // Set a small timeout to ensure DOM is ready
-      setTimeout(() => {
-        if (videoRef.current) {
-          console.log("Setting video source after delay...")
-          videoRef.current.srcObject = mediaStream
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream
 
-          // Add event listeners to debug video element
-          videoRef.current.onloadedmetadata = () => {
-            console.log("Video metadata loaded")
-            videoRef.current?.play().catch((e) => console.error("Error playing video:", e))
-          }
-
-          videoRef.current.onplay = () => console.log("Video started playing")
-          videoRef.current.onerror = (e) => console.error("Video element error:", e)
-        } else {
-          console.error("Video ref is still null after delay")
+        // Add event listeners to debug video element
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded")
+          videoRef.current?.play().catch((e) => console.error("Error playing video:", e))
         }
-      }, 100) // Small delay to ensure DOM is ready
+
+        videoRef.current.onplay = () => console.log("Video started playing")
+        videoRef.current.onerror = (e) => console.error("Video element error:", e)
+      } else {
+        console.error("Video ref is null")
+        throw new Error("Video element not found")
+      }
 
       setShowCamera(true)
       setRecognizedFabric(null)
@@ -228,6 +235,7 @@ export default function FabricRecognition({
     try {
       setIsModelLoading(true)
       setModelError(null)
+      modelLoadedRef.current = false
 
       // Check if TensorFlow.js is loaded
       if (typeof window === "undefined" || !window.tf) {
@@ -263,6 +271,16 @@ export default function FabricRecognition({
           throw new Error("Teachable Machine library not properly initialized")
         }
 
+        // Clean up any existing TensorFlow variables to prevent conflicts
+        if (window.tf && typeof window.tf.disposeVariables === "function") {
+          try {
+            window.tf.disposeVariables()
+            console.log("TensorFlow variables disposed before loading model")
+          } catch (e) {
+            console.error("Error disposing TensorFlow variables:", e)
+          }
+        }
+
         // Add a timeout to prevent hanging
         const modelPromise = window.tmImage.load(modelURL, metadataURL)
         const timeoutPromise = new Promise((_, reject) =>
@@ -272,7 +290,24 @@ export default function FabricRecognition({
         const loadedModel = await Promise.race([modelPromise, timeoutPromise])
         console.log("Teachable Machine model loaded successfully")
 
+        // Test the model with a simple prediction to ensure it's working
+        try {
+          const testCanvas = document.createElement("canvas")
+          testCanvas.width = 200
+          testCanvas.height = 200
+          const testCtx = testCanvas.getContext("2d")
+          if (testCtx) {
+            testCtx.fillStyle = "rgb(200, 0, 0)"
+            testCtx.fillRect(0, 0, 200, 200)
+            const testPrediction = await loadedModel.predict(testCanvas)
+            console.log("Test prediction successful:", testPrediction)
+          }
+        } catch (testError) {
+          console.error("Test prediction failed:", testError)
+        }
+
         setModel(loadedModel)
+        modelLoadedRef.current = true
         setIsModelLoading(false)
         return loadedModel
       } catch (tmError) {
@@ -291,54 +326,71 @@ export default function FabricRecognition({
   useEffect(() => {
     // Check if we're in the browser
     if (typeof window !== "undefined" && window.document) {
-      let loadAttempted = false
-      let modelLoadTimeout: NodeJS.Timeout | null = null
+      const modelLoadTimeout: NodeJS.Timeout | null = null
 
-      // Function to load model when TensorFlow.js is ready
-      const loadTM = () => {
-        console.log("Loading Teachable Machine library...")
-        const tmScript = document.createElement("script")
-        tmScript.src = "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"
-        tmScript.async = true
-        tmScript.onload = () => {
-          console.log("Teachable Machine library loaded")
-          modelLoadTimeout = setTimeout(() => {
-            if (!loadAttempted) {
-              loadAttempted = true
-              loadModel()
+      const loadScriptsAndModel = async () => {
+        try {
+          // First load TensorFlow.js
+          console.log("Loading TensorFlow.js...")
+          await new Promise<void>((resolve, reject) => {
+            const tfScript = document.createElement("script")
+            tfScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"
+            tfScript.async = true
+            tfScript.onload = () => {
+              console.log("TensorFlow.js loaded successfully")
+              resolve()
             }
-          }, 1000)
+            tfScript.onerror = (e) => {
+              console.error("Error loading TensorFlow.js:", e)
+              reject(new Error("Failed to load TensorFlow.js"))
+            }
+            document.body.appendChild(tfScript)
+          })
+
+          // Wait a moment to ensure TensorFlow is initialized
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+
+          // Then load Teachable Machine
+          console.log("Loading Teachable Machine library...")
+          await new Promise<void>((resolve, reject) => {
+            const tmScript = document.createElement("script")
+            tmScript.src =
+              "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"
+            tmScript.async = true
+            tmScript.onload = () => {
+              console.log("Teachable Machine library loaded successfully")
+              resolve()
+            }
+            tmScript.onerror = (e) => {
+              console.error("Error loading Teachable Machine library:", e)
+              reject(new Error("Failed to load Teachable Machine library"))
+            }
+            document.body.appendChild(tmScript)
+          })
+
+          // Wait a moment to ensure Teachable Machine is initialized
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+
+          // Now load the model
+          console.log("Loading model...")
+          await loadModel()
+          console.log("Model loading process completed")
+        } catch (error) {
+          console.error("Error in script loading sequence:", error)
+          setModelError(`Failed to initialize: ${error.message}. Using fallback method.`)
         }
-        tmScript.onerror = (e) => {
-          console.error("Error loading Teachable Machine library:", e)
-          setModelError("Failed to load Teachable Machine library. Using fallback method.")
-        }
-        document.body.appendChild(tmScript)
       }
 
-      // First load TensorFlow.js - use browser-specific version
-      console.log("Loading TensorFlow.js...")
-      const tfScript = document.createElement("script")
-      tfScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"
-      tfScript.async = true
-      tfScript.onload = () => {
-        console.log("TensorFlow.js loaded")
-        // Only load TM after TF is fully loaded
-        setTimeout(loadTM, 1000)
-      }
-      tfScript.onerror = (e) => {
-        console.error("Error loading TensorFlow.js:", e)
-        setModelError("Failed to load TensorFlow.js library. Using fallback method.")
-      }
-      document.body.appendChild(tfScript)
+      // Start the loading process
+      loadScriptsAndModel()
 
       // Set a timeout to check if scripts loaded
       const timeout = setTimeout(() => {
-        if (!loadAttempted) {
+        if (!modelLoadedRef.current) {
           console.error("Script loading timed out")
           setModelError("Script loading timed out. Using fallback method.")
         }
-      }, 15000) // 15 second timeout
+      }, 20000) // 20 second timeout
 
       return () => {
         // Clean up when component unmounts
@@ -396,27 +448,48 @@ export default function FabricRecognition({
           // Use Teachable Machine model if available
           if (model) {
             try {
+              console.log("Using Teachable Machine model for prediction")
+
+              // Ensure the canvas has content
+              const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+              const hasContent = Array.from(imageData.data).some((val) => val !== 0)
+
+              if (!hasContent) {
+                console.error("Canvas appears to be empty")
+                throw new Error("Canvas is empty, cannot perform prediction")
+              }
+
               // Predict using the Teachable Machine model
+              console.log("Starting prediction...")
               const prediction = await model.predict(canvas)
+              console.log("Raw prediction results:", prediction)
 
               // Find the prediction with the highest probability
               let highestProbability = 0
               let highestClass = ""
 
               for (let i = 0; i < prediction.length; i++) {
+                console.log(`Class: ${prediction[i].className}, Probability: ${prediction[i].probability.toFixed(4)}`)
                 if (prediction[i].probability > highestProbability) {
                   highestProbability = prediction[i].probability
                   highestClass = prediction[i].className
                 }
               }
 
+              console.log(`Highest prediction: ${highestClass} (${(highestProbability * 100).toFixed(2)}%)`)
+
               // Map the Teachable Machine class to our fabric types
               const fabricMapping = FABRIC_CLASS_MAPPING
 
-              fabricType = fabricMapping[highestClass] || "fabric1" // Default to fabric1 if no mapping
-              confidence = highestProbability
-
-              console.log(`Teachable Machine prediction: ${highestClass} (${(highestProbability * 100).toFixed(2)}%)`)
+              if (highestClass in fabricMapping) {
+                fabricType = fabricMapping[highestClass]
+                confidence = highestProbability
+                console.log(`Mapped to fabric type: ${fabricType}`)
+              } else {
+                console.warn(`Unknown class: ${highestClass}, using default fabric`)
+                fabricType = "fabric1" // Default to fabric1 if no mapping
+                confidence = highestProbability
+              }
             } catch (predictionError) {
               console.error("Error during model prediction:", predictionError)
               throw new Error("Model prediction failed, using fallback method")
@@ -590,16 +663,22 @@ export default function FabricRecognition({
               const newShapeImages = { ...shapeImages }
               shapesToUpdate.forEach((shapeId) => {
                 newShapeImages[shapeId] = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
-
-                // Call onFabricSelect to notify parent component
-                if (onFabricSelect) {
-                  onFabricSelect(shapeId, FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES])
-                }
               })
               setShapeImages(newShapeImages)
 
               // Clear the selection after applying images
               setSelectedShapes([])
+
+              // Add code to call onFabricSelect when a fabric is selected
+              // For example, when a user selects a fabric for a shape:
+              if (onFabricSelect) {
+                shapesToUpdate.forEach((shapeId) => {
+                  onFabricSelect(
+                    FABRIC_NAMES[fabricType as keyof typeof FABRIC_NAMES],
+                    FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES],
+                  )
+                })
+              }
             }
 
             // Stop the camera after processing
@@ -609,9 +688,9 @@ export default function FabricRecognition({
           console.error("Error during fabric recognition:", error)
           setRecognitionMessage("Error recognizing fabric. Using fallback method.")
 
-          // Use fallback method - select a random fabric from high-quality fabrics
-          const randomFabricKey = HIGH_QUALITY_FABRIC_KEYS[Math.floor(Math.random() * HIGH_QUALITY_FABRIC_KEYS.length)]
-          const shapesToUpdateFallback = [...selectedShapes]
+          // Use fallback method - select a random fabric
+          const randomFabricKey = ALL_FABRIC_KEYS[Math.floor(Math.random() * ALL_FABRIC_KEYS.length)]
+          const shapesToUpdate = [...selectedShapes]
 
           setTimeout(() => {
             setIsRecognizing(false)
@@ -620,18 +699,24 @@ export default function FabricRecognition({
             )
 
             // Apply the random fabric texture to selected shapes
-            if (shapesToUpdateFallback.length > 0) {
+            if (shapesToUpdate.length > 0) {
               const newShapeImages = { ...shapeImages }
-              shapesToUpdateFallback.forEach((shapeId) => {
+              shapesToUpdate.forEach((shapeId) => {
                 newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
-
-                // Call onFabricSelect to notify parent component
-                if (onFabricSelect) {
-                  onFabricSelect(shapeId, FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES])
-                }
               })
               setShapeImages(newShapeImages)
               setSelectedShapes([])
+
+              // Add code to call onFabricSelect when a fabric is selected
+              // For example, when a user selects a fabric for a shape:
+              if (onFabricSelect) {
+                shapesToUpdate.forEach((shapeId) => {
+                  onFabricSelect(
+                    FABRIC_NAMES[randomFabricKey as keyof typeof FABRIC_NAMES],
+                    FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES],
+                  )
+                })
+              }
             }
 
             stopCamera()
@@ -663,27 +748,37 @@ export default function FabricRecognition({
     // Get all shape IDs
     const allShapeIds = shapes.map((shape) => shape.id)
 
-    // For each shape, assign a random fabric from high-quality fabrics only
-    allShapeIds.forEach((shapeId) => {
-      const randomIndex = Math.floor(Math.random() * HIGH_QUALITY_FABRIC_KEYS.length)
-      const randomFabricKey = HIGH_QUALITY_FABRIC_KEYS[randomIndex]
-      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+    // Filter to only use high-quality fabric images (not training images)
+    const highQualityFabrics = [
+      "fabric1",
+      "fabric2",
+      "fabric3",
+      "fabric4",
+      "fabric5",
+      "fabric6",
+      "fabric7",
+      "fabric8",
+      "fabric9",
+      "fabric10",
+      "fabric11",
+      "fabric12",
+      "fabric13",
+      "fabric14",
+      "fabric15",
+      "fabric16",
+      "fabric17",
+      "fabric18",
+    ]
 
-      // Call onFabricSelect to notify parent component
-      if (onFabricSelect) {
-        onFabricSelect(shapeId, FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES])
-      }
+    // For each shape, assign a random high-quality fabric
+    allShapeIds.forEach((shapeId) => {
+      const randomIndex = Math.floor(Math.random() * highQualityFabrics.length)
+      const randomFabricKey = highQualityFabrics[randomIndex]
+      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
     })
 
     setShapeImages(newShapeImages)
     setSelectedShapes([]) // Clear any selections
-  }
-
-  // Handle mode change
-  const [isDrawingModeInternal, setIsDrawingModeInternal] = useState(isDrawingMode)
-
-  const handleModeChange = (drawingMode: boolean) => {
-    setIsDrawingModeInternal(drawingMode)
   }
 
   // Clean up on unmount
@@ -696,94 +791,93 @@ export default function FabricRecognition({
   }, [stream])
 
   return (
-    <div className="flex flex-row items-start gap-8">
-      {/* Left side: Pattern grid */}
-      <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <svg ref={svgRef} width={totalSize} height={totalSize} viewBox={`0 0 ${totalSize} ${totalSize}`}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      <div className="flex justify-center">
+        {/* SVG Pattern on the left - removed extra container div */}
+        <svg ref={svgRef} width="500" height="500" viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
           {/* Define clip paths for each shape */}
           <defs>
-            {shapes.map((shape) => (
-              <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                {shape.type === "triangle" ? (
-                  <polygon points={shape.points} />
-                ) : (
-                  <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
-                )}
-              </clipPath>
-            ))}
+            {/* Center square */}
+            <clipPath id="clip-center-square">
+              <rect x={349.08} y={349.08} width={381.84} height={381.84} transform="rotate(-45 540 540)" />
+            </clipPath>
+            {/* Top-left square */}
+            <clipPath id="clip-top-left-square">
+              <rect x={79.08} y={79.08} width={381.84} height={381.84} transform="rotate(-45 270 270)" />
+            </clipPath>
+            {/* Top-right square */}
+            <clipPath id="clip-top-right-square">
+              <rect x={619.08} y={79.08} width={381.84} height={381.84} transform="rotate(-45 810 270)" />
+            </clipPath>
+            {/* Bottom-left square */}
+            <clipPath id="clip-bottom-left-square">
+              <rect x={79.08} y={619.08} width={381.84} height={381.84} transform="rotate(-45 270 810)" />
+            </clipPath>
+            {/* Bottom-right square */}
+            <clipPath id="clip-bottom-right-square">
+              <rect x={619.08} y={619.08} width={381.84} height={381.84} transform="rotate(-45 810 810)" />
+            </clipPath>
+            {/* Top triangle */}
+            <clipPath id="clip-top-triangle">
+              <polygon points="540,270 810,0 270,0" />
+            </clipPath>
+            {/* Top-right triangle */}
+            <clipPath id="clip-top-right-triangle">
+              <polygon points="810,0 1080,0 1080,270" />
+            </clipPath>
+            {/* Top-left triangle */}
+            <clipPath id="clip-top-left-triangle">
+              <polygon points="0,270 0,0 270,0" />
+            </clipPath>
+            {/* Bottom triangle */}
+            <clipPath id="clip-bottom-triangle">
+              <polygon points="540,810 270,1080 810,1080" />
+            </clipPath>
+            {/* Left triangle */}
+            <clipPath id="clip-left-triangle">
+              <polygon points="270,540 0,270 0,810" />
+            </clipPath>
+            {/* Right triangle */}
+            <clipPath id="clip-right-triangle">
+              <polygon points="810,540 1080,810 1080,270" />
+            </clipPath>
+            {/* Bottom-left triangle */}
+            <clipPath id="clip-bottom-left-triangle">
+              <polygon points="270,1080 0,1080 0,810" />
+            </clipPath>
+            {/* Bottom-right triangle */}
+            <clipPath id="clip-bottom-right-triangle">
+              <polygon points="1080,810 1080,1080 810,1080" />
+            </clipPath>
           </defs>
 
-          {/* Grid lines */}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`vertical-${index}`}
-              x1={index * cellSize}
-              y1={0}
-              x2={index * cellSize}
-              y2={totalSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`horizontal-${index}`}
-              x1={0}
-              y1={index * cellSize}
-              x2={totalSize}
-              y2={index * cellSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-
           {/* Shapes */}
-          {shapes.map((shape) => (
-            <g key={shape.id}>
-              {/* Base shape outline - always visible and behind everything */}
-              {shape.type === "triangle" ? (
-                <polygon
-                  points={shape.points}
-                  fill="transparent"
-                  stroke="#C7C7C7"
-                  strokeWidth="2"
-                  strokeDasharray="none"
-                />
-              ) : (
-                <rect
-                  x={shape.x}
-                  y={shape.y}
-                  width={shape.width}
-                  height={shape.height}
-                  fill="transparent"
-                  stroke="#C7C7C7"
-                  strokeWidth="2"
-                  strokeDasharray="none"
-                />
-              )}
+          {shapes.map((shape) => {
+            const isSelected = selectedShapes.includes(shape.id)
+            const hasImage = shape.id in shapeImages
 
-              {/* If this shape has an image, show it clipped to the shape */}
-              {shape.hasImage && (
-                <image
-                  href={shapeImages[shape.id]}
-                  width={totalSize}
-                  height={totalSize}
-                  preserveAspectRatio="xMidYMid slice"
-                  clipPath={`url(#clip-${shape.id})`}
-                />
-              )}
+            return (
+              <g key={shape.id} onClick={() => handleShapeClick(shape.id)}>
+                {/* If this shape has an image, show it clipped to the shape */}
+                {hasImage && (
+                  <image
+                    href={shapeImages[shape.id]}
+                    width={1080}
+                    height={1080}
+                    preserveAspectRatio="xMidYMid slice"
+                    clipPath={`url(#${shape.clipPath})`}
+                  />
+                )}
 
-              {/* Selection overlay for shapes with images */}
-              {shape.isSelected &&
-                shape.hasImage &&
-                (shape.type === "triangle" ? (
+                {/* Shape outline and click area */}
+                {shape.type === "polygon" ? (
                   <polygon
                     points={shape.points}
-                    fill="#ffffff"
-                    fillOpacity="0.5"
-                    stroke="none"
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer"
+                    fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
+                    fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
+                    stroke="#C7C7C7"
+                    strokeWidth="4"
+                    className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
                 ) : (
                   <rect
@@ -791,107 +885,59 @@ export default function FabricRecognition({
                     y={shape.y}
                     width={shape.width}
                     height={shape.height}
-                    fill="#ffffff"
-                    fillOpacity="0.5"
-                    stroke="none"
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer"
+                    transform={shape.transform}
+                    fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
+                    fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
+                    stroke="#C7C7C7"
+                    strokeWidth="4"
+                    className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
-                ))}
-
-              {/* Selection overlay for shapes without images */}
-              {shape.isSelected &&
-                !shape.hasImage &&
-                (shape.type === "triangle" ? (
-                  <polygon
-                    points={shape.points}
-                    fill="#666666"
-                    fillOpacity="0.2"
-                    stroke="none"
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer"
-                  />
-                ) : (
-                  <rect
-                    x={shape.x}
-                    y={shape.y}
-                    width={shape.width}
-                    height={shape.height}
-                    fill="#666666"
-                    fillOpacity="0.2"
-                    stroke="none"
-                    onClick={() => handleShapeClick(shape.id)}
-                    className="cursor-pointer"
-                  />
-                ))}
-
-              {/* Clickable area (transparent) */}
-              {shape.type === "triangle" ? (
-                <polygon
-                  points={shape.points}
-                  fill="transparent"
-                  stroke="transparent"
-                  onClick={() => handleShapeClick(shape.id)}
-                  className={`${isDrawingMode ? "" : "cursor-pointer"}`}
-                />
-              ) : (
-                <rect
-                  x={shape.x}
-                  y={shape.y}
-                  width={shape.width}
-                  height={shape.height}
-                  fill="transparent"
-                  stroke="transparent"
-                  onClick={() => handleShapeClick(shape.id)}
-                  className={`${isDrawingMode ? "" : "cursor-pointer"}`}
-                />
-              )}
-            </g>
-          ))}
+                )}
+              </g>
+            )
+          })}
         </svg>
       </div>
 
-      {/* Right side: Controls and info */}
-      <div className="flex flex-col gap-6 w-80">
-        {/* Selection info */}
-        <div className="text-sm text-gray-500">
-          {isDrawingMode
-            ? "Drawing mode active - click the pencil icon to exit"
-            : selectedShapes.length === 0
+      <div>
+        {/* Fabric Recognition controls on the right */}
+        <div className="flex flex-col items-start gap-6">
+          {/* Selection info */}
+          <div className="text-sm text-gray-500">
+            {selectedShapes.length === 0
               ? "No shapes selected"
               : `${selectedShapes.length} shape${selectedShapes.length > 1 ? "s" : ""} selected`}
-        </div>
+          </div>
 
-        {isModelLoading && (
-          <Alert className="w-full">
-            <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
-            <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
-          </Alert>
-        )}
+          {isModelLoading && (
+            <Alert className="max-w-md">
+              <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
+              <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
+            </Alert>
+          )}
 
-        {modelError && (
-          <Alert className="w-full" variant="destructive">
-            <AlertTitle>Model Loading Error</AlertTitle>
-            <AlertDescription>{modelError}</AlertDescription>
-          </Alert>
-        )}
+          {modelError && (
+            <Alert className="max-w-md" variant="destructive">
+              <AlertTitle>Model Loading Error</AlertTitle>
+              <AlertDescription>{modelError}</AlertDescription>
+            </Alert>
+          )}
 
-        {/* Fabric recognition result */}
-        {recognitionMessage && (
-          <Alert className="w-full">
-            <Scan className="h-4 w-4" />
-            <AlertTitle>Fabric Recognition</AlertTitle>
-            <AlertDescription>{recognitionMessage}</AlertDescription>
-          </Alert>
-        )}
+          {/* Fabric recognition result */}
+          {recognitionMessage && (
+            <Alert className="max-w-md">
+              <Scan className="h-4 w-4" />
+              <AlertTitle>Fabric Recognition</AlertTitle>
+              <AlertDescription>{recognitionMessage}</AlertDescription>
+            </Alert>
+          )}
 
-        {/* Camera and image controls - only show when not in drawing mode */}
-        {!isDrawingMode && (
-          <div className="flex flex-col gap-3">
+          {/* Camera and image controls */}
+          <div className="flex flex-row gap-3 w-full">
             {!showCamera ? (
-              <div className="flex flex-row gap-3">
+              <>
                 <div
-                  className="flex-1 bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                  className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer flex-1 whitespace-nowrap"
                   onClick={startCamera}
                 >
                   <div className="bg-gray-200 rounded-full p-2 mr-3">
@@ -901,7 +947,7 @@ export default function FabricRecognition({
                 </div>
 
                 <div
-                  className="flex-1 bg-white text-black border border-black rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-100 transition-opacity cursor-pointer whitespace-nowrap"
+                  className="bg-white text-black border border-black rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-100 transition-colors cursor-pointer flex-1 whitespace-nowrap"
                   onClick={randomFill}
                 >
                   <div className="bg-gray-200 rounded-full p-2 mr-3">
@@ -909,7 +955,7 @@ export default function FabricRecognition({
                   </div>
                   <span className="text-lg font-serif font-bold whitespace-nowrap">Random Fill</span>
                 </div>
-              </div>
+              </>
             ) : (
               <>
                 <div
@@ -948,31 +994,16 @@ export default function FabricRecognition({
               </>
             )}
           </div>
-        )}
 
-        {/* Video and canvas elements */}
-        {showCamera && (
-          <div className="mt-4 rounded-lg overflow-hidden bg-gray-900" style={{ width: "100%" }}>
-            <div className="p-2 bg-black text-white text-xs">Camera Preview</div>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-[240px] object-contain bg-black"
-              style={{ display: "block" }}
-              onCanPlay={() => console.log("Video can play now")}
-            />
-            <div className="p-2 bg-black text-white text-xs text-center">
-              If camera is black, check browser permissions
+          {/* Hidden video and canvas elements */}
+          <div className={showCamera ? "block" : "hidden"}>
+            <div className="relative rounded-lg overflow-hidden">
+              <video ref={videoRef} autoPlay playsInline muted className="w-[320px] h-[240px] object-cover" />
             </div>
           </div>
-        )}
-        <canvas ref={recognitionCanvasRef} width="640" height="480" className="hidden" />
+          <canvas ref={recognitionCanvasRef} className="hidden" />
+        </div>
       </div>
-
-      {/* Drawing mode toggle */}
-      <DrawingModeToggle svgRef={svgRef} viewBox={`0 0 ${totalSize} ${totalSize}`} onModeChange={handleModeChange} />
     </div>
   )
 }

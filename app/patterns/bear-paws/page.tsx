@@ -4,17 +4,17 @@ import Link from "next/link"
 const otherPatterns = [
   {
     id: "north-star",
-    image: "/north-star.png",
+    image: "/north-star-quilt.png",
     rotation: "7.37deg",
   },
   {
     id: "log-cabin",
-    image: "/log-cabin.png",
+    image: "/log-cabin-quilt.png",
     rotation: "-8deg",
   },
   {
     id: "crossroads",
-    image: "/squares.png",
+    image: "/crossroads-quilt.png",
     rotation: "3.17deg",
   },
 ]
@@ -46,7 +46,7 @@ export default function BearPawsPage() {
                 <div className="flex justify-center">
                   <div style={{ width: "400px", height: "400px", position: "relative" }}>
                     <Image
-                      src="/bear-paws.png"
+                      src="/bear-paws-quilt.png"
                       alt="Bear Paws quilt pattern"
                       width={400}
                       height={400}

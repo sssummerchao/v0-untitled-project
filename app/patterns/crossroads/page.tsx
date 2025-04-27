@@ -4,17 +4,17 @@ import Link from "next/link"
 const otherPatterns = [
   {
     id: "north-star",
-    image: "/north-star.png",
+    image: "/north-star-quilt.png",
     rotation: "7.37deg",
   },
   {
     id: "log-cabin",
-    image: "/log-cabin.png",
+    image: "/log-cabin-quilt.png",
     rotation: "-8deg",
   },
   {
     id: "bear-paws",
-    image: "/bear-paws.png",
+    image: "/bear-paws-quilt.png",
     rotation: "6.48deg",
   },
 ]
@@ -46,7 +46,7 @@ export default function CrossroadsPage() {
                 <div className="flex justify-center">
                   <div style={{ width: "400px", height: "400px", position: "relative" }}>
                     <Image
-                      src="/squares.png"
+                      src="/crossroads-quilt.png"
                       alt="Crossroads quilt pattern"
                       width={400}
                       height={400}

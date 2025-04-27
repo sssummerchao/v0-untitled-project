@@ -1,36 +1,11 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Camera, Scan } from "lucide-react"
+import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-// Import fabric textures from the fabric-recognition component
-const FABRIC_TEXTURES = {
-  fabric1: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric1.png-eA43GaL1h4FWRfdpJgYoTmux7i2pD2.jpeg",
-  fabric2: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric2.png-lUZBylugZCU3mIUEcHYiff9Bop1MYe.jpeg",
-  fabric3: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric3.png-AEi7cZpbItvFSw9G7rlq1mV6g1fwKU.jpeg",
-  fabric4: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric4.png-OXLI4U2Xtv3nV0Tvz5WZ5Ik3pIPv8k.jpeg",
-  fabric5: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric5.png-VU7EeEqphml1Q1pFFQAddEuwoHxaZ1.jpeg",
-  fabric6: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric6.png-RBUlhhgBdbtQDsR8JmiqgblyuicloE.jpeg",
-  fabric7: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric7.png-dZ9TpymE4ERnvpxE4MhXrYj8oe0P24.jpeg",
-  fabric8: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric8.png-fMN8cPA43m9mtCaCKtN4A1NS7Xmnlh.jpeg",
-  fabric9: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric9.png-JvOT8otoJo74EP0pHU8EgEd05K1oSh.jpeg",
-  fabric10: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Fabric10.png-Sg9O2fOCJv8jfbQFSjE1eojRt9V6Lk.jpeg",
-}
-
-// Fabric names for display
-const FABRIC_NAMES = {
-  fabric1: "Floral Pattern",
-  fabric2: "Navy Blue",
-  fabric3: "Turquoise Dots",
-  fabric4: "Abstract Shapes",
-  fabric5: "Dark Indigo",
-  fabric6: "Rust Orange",
-  fabric7: "Art Deco Pattern",
-  fabric8: "Burgundy",
-  fabric9: "Golden Cross-Stitch",
-  fabric10: "Teal Green",
-}
+// Import the fabric textures and names from the main component
+import { FABRIC_TEXTURES, FABRIC_NAMES, ALL_FABRIC_KEYS } from "./fabric-constants"
 
 export default function CrossroadsPatternRecognition() {
   // State for selected shapes and fabric images
@@ -42,88 +17,64 @@ export default function CrossroadsPatternRecognition() {
   const [isRecognizing, setIsRecognizing] = useState(false)
   const [recognitionMessage, setRecognitionMessage] = useState("")
 
+  // Model-related state
+  const [model, setModel] = useState<any>(null)
+  const [isModelLoading, setIsModelLoading] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
+
   // Refs for video and canvas elements
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Define all shapes based on the SVG
-  const shapes = [
-    // Five main diamonds (rotated rectangles) - including the center one
-    {
-      id: "top-left",
-      type: "polygon",
-      points: "101.676,201.414 202.749,100.234 304.514,202.749 202.749,302.255",
-    },
-    {
-      id: "top-right",
-      type: "polygon",
-      points: "303.906,202.406 404.75,102.512 506.238,202.02 406.001,304.534",
-    },
-    {
-      id: "bottom-left",
-      type: "polygon",
-      points: "102.668,403.641 202.749,302.255 305.236,405.021 205,505.257",
-    },
-    {
-      id: "bottom-right",
-      type: "polygon",
-      points: "305.891,405.625 406.001,304.534 506.238,404.77 407.75,507.535",
-    },
-    {
-      id: "center",
-      type: "polygon",
-      points: "203.707,303.391 304.514,202.749 406.001,304.534 305.236,405.021",
-    },
+  // Grid size
+  const gridSize = 4
+  const cellSize = 100
+  const totalSize = gridSize * cellSize
 
-    // Four triangles between diamonds
-    {
-      id: "left",
-      type: "polygon",
-      points: "100.234,404.77 202.749,302.255 102.512,202.019",
-    },
-    {
-      id: "bottom",
-      type: "polygon",
-      points: "407.75,507.535 305.236,405.021 205,505.257",
-    },
-    {
-      id: "right",
-      type: "polygon",
-      points: "508.516,202.02 406.001,304.534 506.238,404.77",
-    },
-    {
-      id: "top",
-      type: "polygon",
-      points: "202,100.234 304.514,202.749 404.75,102.512",
-    },
-
-    // Four corner triangles
-    {
-      id: "top-left-corner",
-      type: "polygon",
-      points: "203,100 101,100 101,201",
-    },
-    {
-      id: "bottom-left-corner",
-      type: "polygon",
-      points: "103,404 103,506 204,506",
-    },
-    {
-      id: "bottom-right-corner",
-      type: "polygon",
-      points: "405,508 507,508 507,407",
-    },
-    {
-      id: "top-right-corner",
-      type: "polygon",
-      points: "507,203 507,101 406,101",
-    },
+  // Define the Crossroads pattern layout
+  const patternLayout = [
+    ["square", "square", "square", "square"],
+    ["square", "square", "square", "square"],
+    ["square", "square", "square", "square"],
+    ["square", "square", "square", "square"],
   ]
+
+  // Generate shapes for the pattern
+  const shapes = []
+
+  for (let row = 0; row < gridSize; row++) {
+    for (let col = 0; col < gridSize; col++) {
+      // Calculate coordinates
+      const x = col * cellSize
+      const y = row * cellSize
+
+      // Each cell has a unique ID
+      const cellId = `${row}-${col}`
+
+      // Add square shape
+      shapes.push({
+        id: cellId,
+        type: "square",
+        x: x,
+        y: y,
+        width: cellSize,
+        height: cellSize,
+        isSelected: selectedShapes.includes(cellId),
+        hasImage: cellId in shapeImages,
+      })
+    }
+  }
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
+  }
+
+  // Clear all selections
+  const clearSelections = () => {
+    setSelectedShapes([])
   }
 
   // Start webcam
@@ -157,8 +108,141 @@ export default function CrossroadsPatternRecognition() {
     setIsRecognizing(false)
   }
 
-  // Recognize fabric from webcam
-  const recognizeFabric = () => {
+  // Add this function to load the Teachable Machine model
+  const loadModel = async () => {
+    try {
+      setIsModelLoading(true)
+      setModelError(null)
+
+      // Check if TensorFlow.js is loaded
+      if (typeof window === "undefined" || !window.tf) {
+        console.error("TensorFlow.js is not loaded")
+        throw new Error("TensorFlow.js is not loaded")
+      }
+
+      // Check if Teachable Machine is loaded
+      if (!window.tmImage) {
+        console.error("Teachable Machine library is not loaded")
+        throw new Error("Teachable Machine library is not loaded")
+      }
+
+      console.log("Libraries loaded, attempting to load model...")
+
+      // Try loading the model directly from Teachable Machine
+      try {
+        console.log("Attempting to load model from Teachable Machine URL...")
+        const teachableMachineURL = "https://teachablemachine.withgoogle.com/models/zQHyr94Fi/"
+
+        // Use a more direct approach to load the model
+        const modelURL = `${teachableMachineURL}model.json`
+        const metadataURL = `${teachableMachineURL}metadata.json`
+
+        console.log(`Loading model from: ${modelURL}`)
+        console.log(`Loading metadata from: ${metadataURL}`)
+
+        // Make sure tmImage is properly initialized
+        if (typeof window.tmImage.load !== "function") {
+          console.error("tmImage.load is not a function")
+          throw new Error("Teachable Machine library not properly initialized")
+        }
+
+        const loadedModel = await window.tmImage.load(modelURL, metadataURL)
+        setModel(loadedModel)
+        setIsModelLoading(false)
+        console.log("Teachable Machine model loaded successfully from Teachable Machine URL")
+        return
+      } catch (tmError) {
+        console.error("Error loading model from Teachable Machine:", tmError)
+        throw new Error(`Failed to load model from Teachable Machine: ${tmError.message}`)
+      }
+    } catch (error) {
+      console.error("Error loading model:", error)
+      setModelError(`Failed to load fabric recognition model: ${error.message}. Using fallback method.`)
+      setIsModelLoading(false)
+    }
+  }
+
+  // Add this useEffect to load the model when the component mounts
+  useEffect(() => {
+    // Check if we're in the browser
+    if (typeof window !== "undefined" && window.document) {
+      let loadAttempted = false
+      let modelLoadTimeout: NodeJS.Timeout | null = null
+
+      // Function to load model when TensorFlow.js is ready
+      const loadTM = () => {
+        console.log("Loading Teachable Machine library...")
+        const tmScript = document.createElement("script")
+        tmScript.src = "https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5/dist/teachablemachine-image.min.js"
+        tmScript.async = true
+        tmScript.onload = () => {
+          console.log("Teachable Machine library loaded")
+          modelLoadTimeout = setTimeout(() => {
+            if (!loadAttempted) {
+              loadAttempted = true
+              loadModel()
+            }
+          }, 1000)
+        }
+        tmScript.onerror = (e) => {
+          console.error("Error loading Teachable Machine library:", e)
+          setModelError("Failed to load Teachable Machine library. Using fallback method.")
+        }
+        document.body.appendChild(tmScript)
+      }
+
+      // First load TensorFlow.js - use browser-specific version
+      console.log("Loading TensorFlow.js...")
+      const tfScript = document.createElement("script")
+      tfScript.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"
+      tfScript.async = true
+      tfScript.onload = () => {
+        console.log("TensorFlow.js loaded")
+        // Only load TM after TF is fully loaded
+        setTimeout(loadTM, 1000)
+      }
+      tfScript.onerror = (e) => {
+        console.error("Error loading TensorFlow.js:", e)
+        setModelError("Failed to load TensorFlow.js library. Using fallback method.")
+      }
+      document.body.appendChild(tfScript)
+
+      // Set a timeout to check if scripts loaded
+      const timeout = setTimeout(() => {
+        if (!loadAttempted) {
+          console.error("Script loading timed out")
+          setModelError("Script loading timed out. Using fallback method.")
+        }
+      }, 15000) // 15 second timeout
+
+      return () => {
+        // Clean up when component unmounts
+        clearTimeout(timeout)
+        if (modelLoadTimeout) clearTimeout(modelLoadTimeout)
+
+        // Clean up scripts
+        const scripts = document.querySelectorAll("script[src*='tensorflow'], script[src*='teachablemachine']")
+        scripts.forEach((script) => {
+          if (document.body.contains(script)) {
+            document.body.removeChild(script)
+          }
+        })
+
+        // Clean up TensorFlow memory if available
+        if (window.tf && typeof window.tf.disposeVariables === "function") {
+          try {
+            window.tf.disposeVariables()
+            console.log("TensorFlow variables disposed")
+          } catch (e) {
+            console.error("Error disposing TensorFlow variables:", e)
+          }
+        }
+      }
+    }
+  }, [])
+
+  // Fabric recognition function
+  const recognizeFabric = async () => {
     if (videoRef.current && recognitionCanvasRef.current) {
       // Check if any shapes are selected
       if (selectedShapes.length === 0) {
@@ -180,99 +264,320 @@ export default function CrossroadsPatternRecognition() {
         // Draw the current video frame to the canvas
         context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
 
-        // Get image data for analysis
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
-        const data = imageData.data
+        try {
+          let fabricType = ""
+          let confidence = 0
 
-        // Simple color analysis for fabric recognition
-        let redTotal = 0
-        let greenTotal = 0
-        let blueTotal = 0
-        let pixelCount = 0
+          // Use Teachable Machine model if available
+          if (model) {
+            try {
+              // Predict using the Teachable Machine model
+              const prediction = await model.predict(canvas)
 
-        // Sample pixels (every 10th pixel to save computation)
-        for (let i = 0; i < data.length; i += 40) {
-          redTotal += data[i]
-          greenTotal += data[i + 1]
-          blueTotal += data[i + 2]
-          pixelCount++
-        }
+              // Find the prediction with the highest probability
+              let highestProbability = 0
+              let highestClass = ""
 
-        // Calculate average color
-        const avgRed = redTotal / pixelCount
-        const avgGreen = greenTotal / pixelCount
-        const avgBlue = blueTotal / pixelCount
+              for (let i = 0; i < prediction.length; i++) {
+                if (prediction[i].probability > highestProbability) {
+                  highestProbability = prediction[i].probability
+                  highestClass = prediction[i].className
+                }
+              }
 
-        // Calculate brightness and color variance
-        const brightness = (avgRed + avgGreen + avgBlue) / 3
+              // Map the Teachable Machine class to our fabric types
+              const fabricMapping: Record<string, string> = {
+                "Floral pattern": "fabric1",
+                "Dark navy": "fabric2",
+                "Turquoise dots": "fabric3",
+                "Abstract shapes": "fabric4",
+                "Navy blue": "fabric5",
+                "Orange/rust": "fabric6",
+                "Art Deco": "fabric7",
+                "Burgundy/purple": "fabric8",
+                "Golden cross-stitch": "fabric9",
+                "Teal green": "fabric10",
+                "Light blue dots": "fabric11",
+                "Orange dots": "fabric12",
+                "Peach floral": "fabric13",
+                "Mint grid": "fabric14",
+                "Dark floral": "fabric15",
+                "Solid orange": "fabric16",
+                "Colorful plaid": "fabric17",
+                "Gray knit": "fabric18",
+              }
 
-        // Calculate texture variance (simplified)
-        let variance = 0
-        for (let i = 0; i < data.length; i += 40) {
-          const r = data[i] - avgRed
-          const g = data[i + 1] - avgGreen
-          const b = data[i + 2] - avgBlue
-          variance += r * r + g * g + b * b
-        }
-        variance = Math.sqrt(variance / pixelCount)
+              fabricType = fabricMapping[highestClass] || "fabric1" // Default to fabric1 if no mapping
+              confidence = highestProbability
 
-        // Simulate fabric recognition based on color and texture
-        let fabricType = ""
-        let confidence = 0
+              console.log(`Teachable Machine prediction: ${highestClass} (${(highestProbability * 100).toFixed(2)}%)`)
+            } catch (predictionError) {
+              console.error("Error during model prediction:", predictionError)
+              throw new Error("Model prediction failed, using fallback method")
+            }
+          } else {
+            // Fallback to the original algorithm if model is not available
+            // Get image data for analysis
+            const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+            const data = imageData.data
 
-        // Very simplified fabric recognition logic
-        // In a real app, this would use a trained ML model
+            // Simple color analysis for fabric recognition
+            let redTotal = 0
+            let greenTotal = 0
+            let blueTotal = 0
+            let pixelCount = 0
 
-        // Check for lace (typically white/light with high variance)
-        if (brightness > 180 && variance > 50) {
-          fabricType = "fabric1"
-          confidence = 0.8
-        }
-        // Check for denim (typically blue with medium variance)
-        else if (avgBlue > avgRed + 20 && avgBlue > avgGreen + 10) {
-          fabricType = "fabric2"
-          confidence = 0.85
-        }
-        // Check for linen (typically beige/tan with low-medium variance)
-        else if (brightness > 150 && brightness < 220 && avgRed > avgBlue && variance < 50) {
-          fabricType = "fabric3"
-          confidence = 0.75
-        } else {
-          // Default if no clear match
-          // Choose randomly for demo purposes
-          const fabrics = ["fabric4", "fabric5", "fabric6", "fabric7", "fabric8", "fabric9", "fabric10"]
-          fabricType = fabrics[Math.floor(Math.random() * fabrics.length)]
-          confidence = 0.6
-        }
+            // Sample pixels (every 10th pixel to save computation)
+            for (let i = 0; i < data.length; i += 40) {
+              redTotal += data[i]
+              greenTotal += data[i + 1]
+              blueTotal += data[i + 2]
+              pixelCount++
+            }
 
-        // Store the currently selected shapes to apply images to
-        const shapesToUpdate = [...selectedShapes]
+            // Calculate average color
+            const avgRed = redTotal / pixelCount
+            const avgGreen = greenTotal / pixelCount
+            const avgBlue = blueTotal / pixelCount
 
-        // Simulate processing time
-        setTimeout(() => {
-          setRecognizedFabric(fabricType)
-          setRecognitionMessage(
-            `Recognized as ${FABRIC_NAMES[fabricType as keyof typeof FABRIC_NAMES]} (${Math.round(confidence * 100)}% confidence)`,
-          )
-          setIsRecognizing(false)
+            // Calculate brightness and color variance
+            const brightness = (avgRed + avgGreen + avgBlue) / 3
 
-          // Apply the fabric texture to selected shapes
-          if (shapesToUpdate.length > 0) {
-            const newShapeImages = { ...shapeImages }
-            shapesToUpdate.forEach((shapeId) => {
-              newShapeImages[shapeId] = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
-            })
-            setShapeImages(newShapeImages)
+            // Calculate texture variance (simplified)
+            let variance = 0
+            for (let i = 0; i < data.length; i += 40) {
+              const r = data[i] - avgRed
+              const g = data[i + 1] - avgGreen
+              const b = data[i + 2] - avgBlue
+              variance += r * r + g * g + b * b
+            }
+            variance = Math.sqrt(variance / pixelCount)
 
-            // Clear the selection after applying images
-            setSelectedShapes([])
+            // Use the existing fabric recognition logic
+            // Predominantly dark (black/navy)
+            if (brightness < 60) {
+              if (variance > 70) {
+                // Check for dark floral patterns
+                if (avgRed > 80 && avgGreen > 70) {
+                  // Dark floral with colorful elements
+                  fabricType = "fabric15" // Dark floral
+                  confidence = 0.92
+                } else if (variance > 100) {
+                  // Art deco pattern
+                  fabricType = "fabric7" // Art Deco pattern
+                  confidence = 0.89
+                } else {
+                  fabricType = "fabric4" // Abstract shapes
+                  confidence = 0.85
+                }
+              } else {
+                // Solid dark fabrics
+                if (avgBlue > avgRed + 15) {
+                  fabricType = "fabric2" // Navy blue
+                  confidence = 0.94
+                } else {
+                  fabricType = "fabric5" // Dark indigo
+                  confidence = 0.91
+                }
+              }
+            }
+            // Predominantly red/orange
+            else if (avgRed > avgBlue + 50 && avgRed > avgGreen + 20) {
+              if (variance > 50) {
+                if (brightness > 150) {
+                  // Peach with floral pattern
+                  fabricType = "fabric13" // Peach floral
+                  confidence = 0.89
+                } else {
+                  fabricType = "fabric7" // Art Deco pattern
+                  confidence = 0.85
+                }
+              } else {
+                fabricType = "fabric6" // Rust orange
+                confidence = 0.92
+              }
+            }
+            // Predominantly blue/teal/mint
+            else if (avgBlue > avgRed + 10 || avgGreen > avgRed + 10) {
+              if (variance > 60) {
+                if (brightness > 150) {
+                  fabricType = "fabric11" // Light blue dots
+                  confidence = 0.88
+                } else {
+                  fabricType = "fabric3" // Turquoise dots
+                  confidence = 0.87
+                }
+              } else if (avgGreen > avgBlue) {
+                fabricType = "fabric14" // Mint grid
+                confidence = 0.9
+              } else if (brightness < 80) {
+                fabricType = "fabric10" // Teal green
+                confidence = 0.9
+              } else {
+                fabricType = "fabric3" // Turquoise dots
+                confidence = 0.82
+              }
+            }
+            // Predominantly tan/brown with pattern
+            else if (avgRed > 120 && avgGreen > 100 && avgBlue < 100) {
+              if (variance > 40) {
+                fabricType = "fabric12" // Orange dots
+                confidence = 0.86
+              } else {
+                fabricType = "fabric9" // Golden cross-stitch
+                confidence = 0.88
+              }
+            }
+            // Gray/neutral fabrics
+            else if (Math.abs(avgRed - avgBlue) < 20 && Math.abs(avgRed - avgGreen) < 20) {
+              if (variance > 30) {
+                fabricType = "fabric18" // Gray knit
+                confidence = 0.91
+              } else {
+                fabricType = "fabric5" // Dark indigo
+                confidence = 0.84
+              }
+            }
+            // Colorful patterns with high variance
+            else if (variance > 80) {
+              if (avgRed > 100 && avgGreen > 100 && avgBlue > 100) {
+                fabricType = "fabric17" // Colorful plaid
+                confidence = 0.93
+              } else if (avgRed > 120 && avgBlue > 100) {
+                fabricType = "fabric4" // Abstract shapes
+                confidence = 0.87
+              } else {
+                fabricType = "fabric1" // Floral pattern
+                confidence = 0.85
+              }
+            }
+            // Light backgrounds with patterns
+            else if (brightness > 150) {
+              if (variance > 60) {
+                fabricType = "fabric13" // Peach floral
+                confidence = 0.91
+              } else {
+                fabricType = "fabric14" // Mint grid
+                confidence = 0.89
+              }
+            }
+            // Default to fabric1 if no clear match
+            else {
+              fabricType = "fabric1" // Floral pattern
+              confidence = 0.75
+            }
           }
 
-          // Stop the camera after processing
-          stopCamera()
-        }, 1500)
+          // Store the currently selected shapes to apply images to
+          const shapesToUpdate = [...selectedShapes]
+
+          // Simulate processing time
+          setTimeout(() => {
+            setRecognizedFabric(fabricType)
+            setRecognitionMessage(
+              `Recognized as ${FABRIC_NAMES[fabricType as keyof typeof FABRIC_NAMES]} (${Math.round(confidence * 100)}% confidence)`,
+            )
+            setIsRecognizing(false)
+
+            // Apply the fabric texture to selected shapes
+            if (shapesToUpdate.length > 0) {
+              const newShapeImages = { ...shapeImages }
+              shapesToUpdate.forEach((shapeId) => {
+                newShapeImages[shapeId] = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
+              })
+              setShapeImages(newShapeImages)
+
+              // Clear the selection after applying images
+              setSelectedShapes([])
+            }
+
+            // Stop the camera after processing
+            stopCamera()
+          }, 1000)
+        } catch (error) {
+          console.error("Error during fabric recognition:", error)
+          setRecognitionMessage("Error recognizing fabric. Using fallback method.")
+
+          // Use fallback method - select a random fabric
+          const randomFabricKey = ALL_FABRIC_KEYS[Math.floor(Math.random() * ALL_FABRIC_KEYS.length)]
+          const shapesToUpdate = [...selectedShapes]
+
+          setTimeout(() => {
+            setIsRecognizing(false)
+            setRecognitionMessage(
+              `Using a random fabric: ${FABRIC_NAMES[randomFabricKey as keyof typeof FABRIC_NAMES]}`,
+            )
+
+            // Apply the random fabric texture to selected shapes
+            if (shapesToUpdate.length > 0) {
+              const newShapeImages = { ...shapeImages }
+              shapesToUpdate.forEach((shapeId) => {
+                newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+              })
+              setShapeImages(newShapeImages)
+              setSelectedShapes([])
+            }
+
+            stopCamera()
+          }, 1000)
+        }
       }
     }
+  }
+
+  // Clear images from selected shapes
+  const clearSelectedImages = () => {
+    if (selectedShapes.length === 0) return
+
+    const newShapeImages = { ...shapeImages }
+    selectedShapes.forEach((shapeId) => {
+      delete newShapeImages[shapeId]
+    })
+
+    setShapeImages(newShapeImages)
+
+    // Clear the selection after removing images
+    setSelectedShapes([])
+  }
+
+  // Random fill function
+  const randomFill = () => {
+    const newShapeImages = { ...shapeImages }
+
+    // Get all shape IDs
+    const allShapeIds = shapes.map((shape) => shape.id)
+
+    // Filter to only use high-quality fabric images (not training images)
+    const highQualityFabrics = [
+      "fabric1",
+      "fabric2",
+      "fabric3",
+      "fabric4",
+      "fabric5",
+      "fabric6",
+      "fabric7",
+      "fabric8",
+      "fabric9",
+      "fabric10",
+      "fabric11",
+      "fabric12",
+      "fabric13",
+      "fabric14",
+      "fabric15",
+      "fabric16",
+      "fabric17",
+      "fabric18",
+    ]
+
+    // For each shape, assign a random high-quality fabric
+    allShapeIds.forEach((shapeId) => {
+      const randomIndex = Math.floor(Math.random() * highQualityFabrics.length)
+      const randomFabricKey = highQualityFabrics[randomIndex]
+      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+    })
+
+    setShapeImages(newShapeImages)
+    setSelectedShapes([]) // Clear any selections
   }
 
   // Clean up on unmount
@@ -284,75 +589,88 @@ export default function CrossroadsPatternRecognition() {
     }
   }, [stream])
 
-  // Scale the SVG coordinates to fit within 408x408
-  const scaleCoordinates = (points: string) => {
-    // Original SVG is 609x608 with content centered at 101.726,100.78 with width/height 406.486
-    // We need to scale and center this to fit in 408x408
-
-    // Parse the points
-    const pointPairs = points.split(" ").map((pair) => {
-      const [x, y] = pair.split(",").map(Number)
-
-      // Scale the coordinates to fit in 408x408
-      // First shift to origin (subtract the top-left corner coordinates)
-      const shiftedX = x - 101.726
-      const shiftedY = y - 100.78
-
-      // Then scale to fit in 408x408
-      const scaledX = (shiftedX / 406.486) * 408
-      const scaledY = (shiftedY / 406.486) * 408
-
-      return `${scaledX.toFixed(2)},${scaledY.toFixed(2)}`
-    })
-
-    return pointPairs.join(" ")
-  }
-
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <svg width="408" height="408" viewBox="0 0 408 408" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="408" height="408" rx="4.28915" fill="white" stroke="#C7C7C7" strokeWidth="1.51382" />
-
+        <svg width={totalSize} height={totalSize} viewBox={`0 0 ${totalSize} ${totalSize}`}>
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (
               <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                <polygon points={scaleCoordinates(shape.points)} />
+                {shape.type === "triangle" ? (
+                  <polygon points={shape.points} />
+                ) : (
+                  <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
+                )}
               </clipPath>
             ))}
           </defs>
 
-          {/* Render shapes with images if available */}
+          {/* Grid lines */}
+          {Array.from({ length: gridSize + 1 }).map((_, index) => (
+            <line
+              key={`vertical-${index}`}
+              x1={index * cellSize}
+              y1={0}
+              x2={index * cellSize}
+              y2={totalSize}
+              stroke="#C7C7C7"
+              strokeWidth="1"
+            />
+          ))}
+          {Array.from({ length: gridSize + 1 }).map((_, index) => (
+            <line
+              key={`horizontal-${index}`}
+              x1={0}
+              y1={index * cellSize}
+              x2={totalSize}
+              y2={index * cellSize}
+              stroke="#C7C7C7"
+              strokeWidth="1"
+            />
+          ))}
+
+          {/* Shapes */}
           {shapes.map((shape) => (
             <g key={shape.id}>
               {/* If this shape has an image, show it clipped to the shape */}
-              {shape.id in shapeImages && (
+              {shape.hasImage && (
                 <image
                   href={shapeImages[shape.id]}
-                  width="408"
-                  height="408"
+                  width={totalSize}
+                  height={totalSize}
                   preserveAspectRatio="xMidYMid slice"
                   clipPath={`url(#clip-${shape.id})`}
                 />
               )}
 
               {/* Shape outline and click area */}
-              <polygon
-                points={scaleCoordinates(shape.points)}
-                fill={
-                  selectedShapes.includes(shape.id)
-                    ? shape.id in shapeImages
-                      ? "transparent"
-                      : "rgba(0,0,0,0.1)"
-                    : "transparent"
-                }
-                stroke="black"
-                strokeWidth={selectedShapes.includes(shape.id) ? "5" : "1"}
-                strokeDasharray={selectedShapes.includes(shape.id) && shape.id in shapeImages ? "5,3" : "none"}
-                onClick={() => handleShapeClick(shape.id)}
-                className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-              />
+              {shape.type === "triangle" ? (
+                <polygon
+                  points={shape.points}
+                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
+                  stroke="#C7C7C7"
+                  strokeWidth="4"
+                  strokeDasharray="none"
+                  onClick={() => handleShapeClick(shape.id)}
+                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
+                />
+              ) : (
+                <rect
+                  x={shape.x}
+                  y={shape.y}
+                  width={shape.width}
+                  height={shape.height}
+                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
+                  stroke="#C7C7C7"
+                  strokeWidth="4"
+                  strokeDasharray="none"
+                  onClick={() => handleShapeClick(shape.id)}
+                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
+                />
+              )}
             </g>
           ))}
         </svg>
@@ -365,6 +683,20 @@ export default function CrossroadsPatternRecognition() {
           : `${selectedShapes.length} shape${selectedShapes.length > 1 ? "s" : ""} selected`}
       </div>
 
+      {isModelLoading && (
+        <Alert className="max-w-md">
+          <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
+          <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
+        </Alert>
+      )}
+
+      {modelError && (
+        <Alert className="max-w-md" variant="destructive">
+          <AlertTitle>Model Loading Error</AlertTitle>
+          <AlertDescription>{modelError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Fabric recognition result */}
       {recognitionMessage && (
         <Alert className="max-w-md">
@@ -375,51 +707,67 @@ export default function CrossroadsPatternRecognition() {
       )}
 
       {/* Camera and image controls */}
-      {!showCamera ? (
-        <div
-          className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
-          onClick={startCamera}
-        >
-          <div className="bg-gray-200 rounded-full p-2 mr-3">
-            <Camera size={16} className="text-black" />
-          </div>
-          <span className="text-lg font-serif font-bold">Scan Fabric</span>
-        </div>
-      ) : (
-        <>
-          <div
-            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
-            onClick={recognizeFabric}
-            style={{ opacity: isRecognizing ? 0.7 : 1 }}
-          >
-            <div className="bg-gray-200 rounded-full p-2 mr-3">
-              <Scan size={16} className="text-black" />
+      <div className="flex gap-4 flex-wrap justify-center">
+        {!showCamera ? (
+          <>
+            <div
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+              onClick={startCamera}
+            >
+              <div className="bg-gray-200 rounded-full p-2 mr-3">
+                <Camera size={16} className="text-black" />
+              </div>
+              <span className="text-lg font-serif font-bold">Scan Fabric</span>
             </div>
-            <span className="text-lg font-serif font-bold">{isRecognizing ? "Analyzing..." : "Recognize Fabric"}</span>
-          </div>
 
-          <div
-            className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
-            onClick={stopCamera}
-          >
-            <div className="bg-gray-200 rounded-full p-2 mr-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-black"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
+            <div
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+              onClick={randomFill}
+            >
+              <div className="bg-gray-200 rounded-full p-2 mr-3">
+                <Shuffle size={16} className="text-black" />
+              </div>
+              <span className="text-lg font-serif font-bold">Random Fill</span>
             </div>
-            <span className="text-lg font-serif font-bold">Cancel</span>
-          </div>
-        </>
-      )}
+          </>
+        ) : (
+          <>
+            <div
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+              onClick={recognizeFabric}
+              style={{ opacity: isRecognizing ? 0.7 : 1 }}
+            >
+              <div className="bg-gray-200 rounded-full p-2 mr-3">
+                <Scan size={16} className="text-black" />
+              </div>
+              <span className="text-lg font-serif font-bold">
+                {isRecognizing ? "Analyzing..." : "Recognize Fabric"}
+              </span>
+            </div>
+
+            <div
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+              onClick={stopCamera}
+            >
+              <div className="bg-gray-200 rounded-full p-2 mr-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-black"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <span className="text-lg font-serif font-bold">Cancel</span>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Hidden video and canvas elements */}
       <div className={showCamera ? "block" : "hidden"}>

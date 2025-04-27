@@ -4,17 +4,17 @@ import Link from "next/link"
 const otherPatterns = [
   {
     id: "log-cabin",
-    image: "/log-cabin.png",
+    image: "/log-cabin-quilt.png",
     rotation: "-8deg",
   },
   {
     id: "crossroads",
-    image: "/squares.png",
+    image: "/crossroads-quilt.png",
     rotation: "3.17deg",
   },
   {
     id: "bear-paws",
-    image: "/bear-paws.png",
+    image: "/bear-paws-quilt.png",
     rotation: "6.48deg",
   },
 ]
@@ -46,7 +46,7 @@ export default function NorthStarPage() {
                 <div className="flex justify-center">
                   <div style={{ width: "400px", height: "400px", position: "relative" }}>
                     <Image
-                      src="/north-star.png"
+                      src="/north-star-quilt.png"
                       alt="North Star quilt pattern"
                       width={400}
                       height={400}
@@ -69,7 +69,7 @@ export default function NorthStarPage() {
                   </p>
 
                   <div style={{ transform: "rotate(-4.49deg)", transformOrigin: "center left" }}>
-                    <Link href="/create">
+                    <Link href="/create/north-star">
                       <div className="bg-black text-white rounded-full inline-flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity">
                         <div className="bg-gray-200 rounded-full p-2 mr-3">
                           <svg

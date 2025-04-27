@@ -3,21 +3,12 @@
 import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { FABRIC_TEXTURES, FABRIC_NAMES, ALL_FABRIC_KEYS } from "./fabric-constants"
 
-// Update imports to include the new constants
-import {
-  FABRIC_TEXTURES,
-  FABRIC_NAMES,
-  ALL_FABRIC_KEYS,
-  TEACHABLE_MACHINE_URL,
-  FABRIC_CLASS_MAPPING,
-} from "./fabric-constants"
-
-// Import the fabric textures and names from the main component
-// import { FABRIC_TEXTURES, FABRIC_NAMES, FEATURED_FABRICS, ALL_FABRIC_KEYS } from "./fabric-constants"
-import { FEATURED_FABRICS } from "./fabric-constants"
-
-export default function LogCabinPatternRecognition() {
+// Add the onFabricSelect prop to the component
+export default function BearPawsSVGPattern({
+  onFabricSelect,
+}: { onFabricSelect?: (shapeId: string, fabricUrl: string) => void }) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -34,60 +25,422 @@ export default function LogCabinPatternRecognition() {
 
   // Refs for video and canvas elements
   const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Grid size
-  const gridSize = 4
-  const cellSize = 100
-  const totalSize = gridSize * cellSize
+  // SVG container size
+  const svgSize = 500
 
-  // Define the Log Cabin pattern layout
-  const patternLayout = [
-    ["cabin", "cabin", "cabin", "cabin"],
-    ["cabin", "center", "center", "cabin"],
-    ["cabin", "center", "center", "cabin"],
-    ["cabin", "cabin", "cabin", "cabin"],
+  // Define the shapes for the Bear Paws pattern exactly matching the SVG
+  const shapes = [
+    // Center square
+    {
+      id: "center-square",
+      type: "square",
+      x: 462.86,
+      y: 462.86,
+      width: 154.29,
+      height: 154.29,
+      isSelected: selectedShapes.includes("center-square"),
+      hasImage: "center-square" in shapeImages,
+    },
+    // Four large squares
+    {
+      id: "top-left-square",
+      type: "square",
+      x: 154.29,
+      y: 154.29,
+      width: 308.57,
+      height: 308.57,
+      isSelected: selectedShapes.includes("top-left-square"),
+      hasImage: "top-left-square" in shapeImages,
+    },
+    {
+      id: "bottom-left-square",
+      type: "square",
+      x: 154.29,
+      y: 617.14,
+      width: 308.57,
+      height: 308.57,
+      isSelected: selectedShapes.includes("bottom-left-square"),
+      hasImage: "bottom-left-square" in shapeImages,
+    },
+    {
+      id: "top-right-square",
+      type: "square",
+      x: 617.14,
+      y: 154.29,
+      width: 308.57,
+      height: 308.57,
+      isSelected: selectedShapes.includes("top-right-square"),
+      hasImage: "top-right-square" in shapeImages,
+    },
+    {
+      id: "bottom-right-square",
+      type: "square",
+      x: 617.14,
+      y: 617.14,
+      width: 308.57,
+      height: 308.57,
+      isSelected: selectedShapes.includes("bottom-right-square"),
+      hasImage: "bottom-right-square" in shapeImages,
+    },
+    // Top left paw triangles
+    {
+      id: "tl-paw-1",
+      type: "triangle",
+      points: "308.57 154.29 154.29 154.29 154.29 0 308.57 154.29",
+      isSelected: selectedShapes.includes("tl-paw-1"),
+      hasImage: "tl-paw-1" in shapeImages,
+    },
+    {
+      id: "tl-paw-2",
+      type: "triangle",
+      points: "154.29 0 308.57 0 308.57 154.29 154.29 0",
+      isSelected: selectedShapes.includes("tl-paw-2"),
+      hasImage: "tl-paw-2" in shapeImages,
+    },
+    {
+      id: "tl-paw-3",
+      type: "triangle",
+      points: "308.57 0 462.86 0 462.86 154.29 308.57 0",
+      isSelected: selectedShapes.includes("tl-paw-3"),
+      hasImage: "tl-paw-3" in shapeImages,
+    },
+    {
+      id: "tl-paw-4",
+      type: "triangle",
+      points: "462.86 154.29 308.57 154.29 308.57 0 462.86 154.29",
+      isSelected: selectedShapes.includes("tl-paw-4"),
+      hasImage: "tl-paw-4" in shapeImages,
+    },
+    // Left paw triangles
+    {
+      id: "left-paw-1",
+      type: "triangle",
+      points: "0 154.29 154.29 154.29 154.29 308.57 0 154.29",
+      isSelected: selectedShapes.includes("left-paw-1"),
+      hasImage: "left-paw-1" in shapeImages,
+    },
+    {
+      id: "left-paw-2",
+      type: "triangle",
+      points: "0 308.57 154.29 308.57 154.29 462.86 0 308.57",
+      isSelected: selectedShapes.includes("left-paw-2"),
+      hasImage: "left-paw-2" in shapeImages,
+    },
+    // Right paw triangles
+    {
+      id: "right-paw-1",
+      type: "triangle",
+      points: "925.71 308.57 925.71 154.29 1080 154.29 925.71 308.57",
+      isSelected: selectedShapes.includes("right-paw-1"),
+      hasImage: "right-paw-1" in shapeImages,
+    },
+    {
+      id: "right-paw-2",
+      type: "triangle",
+      points: "925.71 462.86 925.71 308.57 1080 308.57 925.71 462.86",
+      isSelected: selectedShapes.includes("right-paw-2"),
+      hasImage: "right-paw-2" in shapeImages,
+    },
+    // Top right paw triangles
+    {
+      id: "tr-paw-1",
+      type: "triangle",
+      points: "925.71 0 925.71 154.29 771.43 154.29 925.71 0",
+      isSelected: selectedShapes.includes("tr-paw-1"),
+      hasImage: "tr-paw-1" in shapeImages,
+    },
+    {
+      id: "tr-paw-2",
+      type: "triangle",
+      points: "771.43 0 771.43 154.29 617.14 154.29 771.43 0",
+      isSelected: selectedShapes.includes("tr-paw-2"),
+      hasImage: "tr-paw-2" in shapeImages,
+    },
+    {
+      id: "tr-paw-3",
+      type: "triangle",
+      points: "617.14 154.29 617.14 0 771.43 0 617.14 154.29",
+      isSelected: selectedShapes.includes("tr-paw-3"),
+      hasImage: "tr-paw-3" in shapeImages,
+    },
+    {
+      id: "tr-paw-4",
+      type: "triangle",
+      points: "771.43 154.29 771.43 0 925.71 0 771.43 154.29",
+      isSelected: selectedShapes.includes("tr-paw-4"),
+      hasImage: "tr-paw-4" in shapeImages,
+    },
+    // Bottom right paw triangles
+    {
+      id: "br-paw-1",
+      type: "triangle",
+      points: "771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71",
+      isSelected: selectedShapes.includes("br-paw-1"),
+      hasImage: "br-paw-1" in shapeImages,
+    },
+    {
+      id: "br-paw-2",
+      type: "triangle",
+      points: "617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71",
+      isSelected: selectedShapes.includes("br-paw-2"),
+      hasImage: "br-paw-2" in shapeImages,
+    },
+    // Additional triangles from the SVG
+    {
+      id: "right-paw-3",
+      type: "triangle",
+      points: "1080 925.71 925.71 925.71 925.71 771.43 1080 925.71",
+      isSelected: selectedShapes.includes("right-paw-3"),
+      hasImage: "right-paw-3" in shapeImages,
+    },
+    {
+      id: "right-paw-4",
+      type: "triangle",
+      points: "1080 771.43 925.71 771.43 925.71 617.14 1080 771.43",
+      isSelected: selectedShapes.includes("right-paw-4"),
+      hasImage: "right-paw-4" in shapeImages,
+    },
+    {
+      id: "left-paw-3",
+      type: "triangle",
+      points: "154.29 771.43 154.29 925.71 0 925.71 154.29 771.43",
+      isSelected: selectedShapes.includes("left-paw-3"),
+      hasImage: "left-paw-3" in shapeImages,
+    },
+    {
+      id: "left-paw-4",
+      type: "triangle",
+      points: "154.29 617.14 154.29 771.43 0 771.43 154.29 617.14",
+      isSelected: selectedShapes.includes("left-paw-4"),
+      hasImage: "left-paw-4" in shapeImages,
+    },
+    // Bottom left paw triangles
+    {
+      id: "bl-paw-1",
+      type: "triangle",
+      points: "154.29 1080 154.29 925.71 308.57 925.71 154.29 1080",
+      isSelected: selectedShapes.includes("bl-paw-1"),
+      hasImage: "bl-paw-1" in shapeImages,
+    },
+    {
+      id: "bl-paw-2",
+      type: "triangle",
+      points: "308.57 1080 308.57 925.71 462.86 925.71 308.57 1080",
+      isSelected: selectedShapes.includes("bl-paw-2"),
+      hasImage: "bl-paw-2" in shapeImages,
+    },
+    // Corner squares
+    {
+      id: "top-left-corner",
+      type: "square",
+      x: 0,
+      y: 0,
+      width: 154.29,
+      height: 154.29,
+      isSelected: selectedShapes.includes("top-left-corner"),
+      hasImage: "top-left-corner" in shapeImages,
+    },
+    {
+      id: "top-right-corner",
+      type: "square",
+      x: 925.71,
+      y: 0,
+      width: 154.29,
+      height: 154.29,
+      isSelected: selectedShapes.includes("top-right-corner"),
+      hasImage: "top-right-corner" in shapeImages,
+    },
+    // Middle vertical rectangles
+    {
+      id: "top-middle-rect",
+      type: "square",
+      x: 462.86,
+      y: 0,
+      width: 154.29,
+      height: 462.86,
+      isSelected: selectedShapes.includes("top-middle-rect"),
+      hasImage: "top-middle-rect" in shapeImages,
+    },
+    // Additional bottom right paw triangles
+    {
+      id: "br-paw-3",
+      type: "triangle",
+      points: "771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71",
+      isSelected: selectedShapes.includes("br-paw-3"),
+      hasImage: "br-paw-3" in shapeImages,
+    },
+    {
+      id: "br-paw-4",
+      type: "triangle",
+      points: "925.71 1080 771.43 1080 771.43 925.71 925.71 1080",
+      isSelected: selectedShapes.includes("br-paw-4"),
+      hasImage: "br-paw-4" in shapeImages,
+    },
+    {
+      id: "br-paw-5",
+      type: "triangle",
+      points: "771.43 1080 617.14 1080 617.14 925.71 771.43 1080",
+      isSelected: selectedShapes.includes("br-paw-5"),
+      hasImage: "br-paw-5" in shapeImages,
+    },
+    {
+      id: "br-paw-6",
+      type: "triangle",
+      points: "617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71",
+      isSelected: selectedShapes.includes("br-paw-6"),
+      hasImage: "br-paw-6" in shapeImages,
+    },
+    // Additional bottom left paw triangles
+    {
+      id: "bl-paw-3",
+      type: "triangle",
+      points: "154.29 1080 154.29 925.71 308.57 925.71 154.29 1080",
+      isSelected: selectedShapes.includes("bl-paw-3"),
+      hasImage: "bl-paw-3" in shapeImages,
+    },
+    {
+      id: "bl-paw-4",
+      type: "triangle",
+      points: "308.57 1080 308.57 925.71 462.86 925.71 308.57 1080",
+      isSelected: selectedShapes.includes("bl-paw-4"),
+      hasImage: "bl-paw-4" in shapeImages,
+    },
+    {
+      id: "bl-paw-5",
+      type: "triangle",
+      points: "462.86 925.71 462.86 1080 308.57 1080 462.86 925.71",
+      isSelected: selectedShapes.includes("bl-paw-5"),
+      hasImage: "bl-paw-5" in shapeImages,
+    },
+    {
+      id: "bl-paw-6",
+      type: "triangle",
+      points: "308.57 925.71 308.57 1080 154.29 1080 308.57 925.71",
+      isSelected: selectedShapes.includes("bl-paw-6"),
+      hasImage: "bl-paw-6" in shapeImages,
+    },
+    // Bottom corner squares
+    {
+      id: "bottom-right-corner",
+      type: "square",
+      x: 925.71,
+      y: 925.71,
+      width: 154.29,
+      height: 154.29,
+      isSelected: selectedShapes.includes("bottom-right-corner"),
+      hasImage: "bottom-right-corner" in shapeImages,
+    },
+    {
+      id: "bottom-left-corner",
+      type: "square",
+      x: 0,
+      y: 925.71,
+      width: 154.29,
+      height: 154.29,
+      isSelected: selectedShapes.includes("bottom-left-corner"),
+      hasImage: "bottom-left-corner" in shapeImages,
+    },
+    // Bottom middle rectangle
+    {
+      id: "bottom-middle-rect",
+      type: "square",
+      x: 462.86,
+      y: 617.14,
+      width: 154.29,
+      height: 462.86,
+      isSelected: selectedShapes.includes("bottom-middle-rect"),
+      hasImage: "bottom-middle-rect" in shapeImages,
+    },
+    // Additional left side triangles
+    {
+      id: "left-paw-5",
+      type: "triangle",
+      points: "0 925.71 0 771.43 154.29 771.43 0 925.71",
+      isSelected: selectedShapes.includes("left-paw-5"),
+      hasImage: "left-paw-5" in shapeImages,
+    },
+    {
+      id: "left-paw-6",
+      type: "triangle",
+      points: "0 771.43 0 617.14 154.29 617.14 0 771.43",
+      isSelected: selectedShapes.includes("left-paw-6"),
+      hasImage: "left-paw-6" in shapeImages,
+    },
+    {
+      id: "left-paw-7",
+      type: "triangle",
+      points: "154.29 462.86 0 462.86 0 308.57 154.29 462.86",
+      isSelected: selectedShapes.includes("left-paw-7"),
+      hasImage: "left-paw-7" in shapeImages,
+    },
+    {
+      id: "left-paw-8",
+      type: "triangle",
+      points: "154.29 308.57 0 308.57 0 154.29 154.29 308.57",
+      isSelected: selectedShapes.includes("left-paw-8"),
+      hasImage: "left-paw-8" in shapeImages,
+    },
+    // Middle horizontal rectangle - left
+    {
+      id: "middle-left-rect",
+      type: "square",
+      x: 0,
+      y: 462.86,
+      width: 462.86,
+      height: 154.29,
+      isSelected: selectedShapes.includes("middle-left-rect"),
+      hasImage: "middle-left-rect" in shapeImages,
+    },
+    // Additional right side triangles
+    {
+      id: "right-paw-5",
+      type: "triangle",
+      points: "1080 154.29 1080 308.57 925.71 308.57 1080 154.29",
+      isSelected: selectedShapes.includes("right-paw-5"),
+      hasImage: "right-paw-5" in shapeImages,
+    },
+    {
+      id: "right-paw-6",
+      type: "triangle",
+      points: "1080 308.57 1080 462.86 925.71 462.86 1080 308.57",
+      isSelected: selectedShapes.includes("right-paw-6"),
+      hasImage: "right-paw-6" in shapeImages,
+    },
+    {
+      id: "right-paw-7",
+      type: "triangle",
+      points: "925.71 617.14 1080 617.14 1080 771.43 925.71 617.14",
+      isSelected: selectedShapes.includes("right-paw-7"),
+      hasImage: "right-paw-7" in shapeImages,
+    },
+    {
+      id: "right-paw-8",
+      type: "triangle",
+      points: "925.71 771.43 1080 771.43 1080 925.71 925.71 771.43",
+      isSelected: selectedShapes.includes("right-paw-8"),
+      hasImage: "right-paw-8" in shapeImages,
+    },
+    // Middle horizontal rectangle - right
+    {
+      id: "middle-right-rect",
+      type: "square",
+      x: 617.14,
+      y: 462.86,
+      width: 462.86,
+      height: 154.29,
+      isSelected: selectedShapes.includes("middle-right-rect"),
+      hasImage: "middle-right-rect" in shapeImages,
+    },
   ]
-
-  // Generate shapes for the pattern
-  const shapes = []
-
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      // Get the shape type from the layout
-      const shapeType = patternLayout[row][col]
-
-      // Calculate coordinates
-      const x = col * cellSize
-      const y = row * cellSize
-
-      // Each cell has a unique ID
-      const cellId = `${row}-${col}`
-
-      // All shapes are squares in this simplified version
-      shapes.push({
-        id: cellId,
-        type: "square",
-        x: x,
-        y: y,
-        width: cellSize,
-        height: cellSize,
-        isSelected: selectedShapes.includes(cellId),
-        hasImage: cellId in shapeImages,
-      })
-    }
-  }
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    console.log(`Shape clicked: ${id}`)
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
-  }
-
-  // Clear all selections
-  const clearSelections = () => {
-    setSelectedShapes([])
   }
 
   // Start webcam
@@ -98,9 +451,18 @@ export default function LogCabinPatternRecognition() {
       })
       setStream(mediaStream)
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-      }
+      // Ensure the video element exists before setting srcObject
+      console.log("Video ref status:", videoRef.current ? "exists" : "null")
+
+      // Set a small timeout to ensure DOM is ready
+      setTimeout(() => {
+        if (videoRef.current) {
+          console.log("Setting video source after delay...")
+          videoRef.current.srcObject = mediaStream
+        } else {
+          console.error("Video ref is still null after delay")
+        }
+      }, 100) // Small delay to ensure DOM is ready
 
       setShowCamera(true)
       setRecognizedFabric(null)
@@ -121,7 +483,7 @@ export default function LogCabinPatternRecognition() {
     setIsRecognizing(false)
   }
 
-  // Update the loadModel function to be more robust
+  // Add this function to load the Teachable Machine model
   const loadModel = async () => {
     try {
       setIsModelLoading(true)
@@ -144,9 +506,7 @@ export default function LogCabinPatternRecognition() {
       // Try loading the model directly from Teachable Machine
       try {
         console.log("Attempting to load model from Teachable Machine URL...")
-
-        // Use the constant from fabric-constants.ts
-        const teachableMachineURL = TEACHABLE_MACHINE_URL
+        const teachableMachineURL = "https://teachablemachine.withgoogle.com/models/zQHyr94Fi/"
 
         // Use a more direct approach to load the model
         const modelURL = `${teachableMachineURL}model.json`
@@ -161,18 +521,11 @@ export default function LogCabinPatternRecognition() {
           throw new Error("Teachable Machine library not properly initialized")
         }
 
-        // Add a timeout to prevent hanging
-        const modelPromise = window.tmImage.load(modelURL, metadataURL)
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Model loading timed out")), 15000),
-        )
-
-        const loadedModel = await Promise.race([modelPromise, timeoutPromise])
-        console.log("Teachable Machine model loaded successfully")
-
+        const loadedModel = await window.tmImage.load(modelURL, metadataURL)
         setModel(loadedModel)
         setIsModelLoading(false)
-        return loadedModel
+        console.log("Teachable Machine model loaded successfully from Teachable Machine URL")
+        return
       } catch (tmError) {
         console.error("Error loading model from Teachable Machine:", tmError)
         throw new Error(`Failed to load model from Teachable Machine: ${tmError.message}`)
@@ -181,7 +534,6 @@ export default function LogCabinPatternRecognition() {
       console.error("Error loading model:", error)
       setModelError(`Failed to load fabric recognition model: ${error.message}. Using fallback method.`)
       setIsModelLoading(false)
-      return null
     }
   }
 
@@ -308,8 +660,27 @@ export default function LogCabinPatternRecognition() {
                 }
               }
 
-              // In the recognizeFabric function, replace the fabricMapping with:
-              const fabricMapping = FABRIC_CLASS_MAPPING
+              // Map the Teachable Machine class to our fabric types
+              const fabricMapping: Record<string, string> = {
+                "Floral pattern": "fabric1",
+                "Dark navy": "fabric2",
+                "Turquoise dots": "fabric3",
+                "Abstract shapes": "fabric4",
+                "Navy blue": "fabric5",
+                "Orange/rust": "fabric6",
+                "Art Deco": "fabric7",
+                "Burgundy/purple": "fabric8",
+                "Golden cross-stitch": "fabric9",
+                "Teal green": "fabric10",
+                "Light blue dots": "fabric11",
+                "Orange dots": "fabric12",
+                "Peach floral": "fabric13",
+                "Mint grid": "fabric14",
+                "Dark floral": "fabric15",
+                "Solid orange": "fabric16",
+                "Colorful plaid": "fabric17",
+                "Gray knit": "fabric18",
+              }
 
               fabricType = fabricMapping[highestClass] || "fabric1" // Default to fabric1 if no mapping
               confidence = highestProbability
@@ -474,6 +845,7 @@ export default function LogCabinPatternRecognition() {
 
           // Store the currently selected shapes to apply images to
           const shapesToUpdate = [...selectedShapes]
+          const fabricUrl = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
 
           // Simulate processing time
           setTimeout(() => {
@@ -486,11 +858,17 @@ export default function LogCabinPatternRecognition() {
             // Apply the fabric texture to selected shapes
             if (shapesToUpdate.length > 0) {
               const newShapeImages = { ...shapeImages }
-              shapesToUpdate.forEach((shapeId) => {
-                newShapeImages[shapeId] = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
-              })
-              setShapeImages(newShapeImages)
 
+              shapesToUpdate.forEach((shapeId) => {
+                newShapeImages[shapeId] = fabricUrl
+                // Add code to call onFabricSelect when a fabric is selected
+                // For example, when a user selects a fabric for a shape:
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
+              })
+
+              setShapeImages(newShapeImages)
               // Clear the selection after applying images
               setSelectedShapes([])
             }
@@ -504,6 +882,7 @@ export default function LogCabinPatternRecognition() {
 
           // Use fallback method - select a random fabric
           const randomFabricKey = ALL_FABRIC_KEYS[Math.floor(Math.random() * ALL_FABRIC_KEYS.length)]
+          const fabricUrl = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
           const shapesToUpdate = [...selectedShapes]
 
           setTimeout(() => {
@@ -515,9 +894,16 @@ export default function LogCabinPatternRecognition() {
             // Apply the random fabric texture to selected shapes
             if (shapesToUpdate.length > 0) {
               const newShapeImages = { ...shapeImages }
+
               shapesToUpdate.forEach((shapeId) => {
-                newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+                newShapeImages[shapeId] = fabricUrl
+                // Add code to call onFabricSelect when a fabric is selected
+                // For example, when a user selects a fabric for a shape:
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
               })
+
               setShapeImages(newShapeImages)
               setSelectedShapes([])
             }
@@ -527,21 +913,6 @@ export default function LogCabinPatternRecognition() {
         }
       }
     }
-  }
-
-  // Clear images from selected shapes
-  const clearSelectedImages = () => {
-    if (selectedShapes.length === 0) return
-
-    const newShapeImages = { ...shapeImages }
-    selectedShapes.forEach((shapeId) => {
-      delete newShapeImages[shapeId]
-    })
-
-    setShapeImages(newShapeImages)
-
-    // Clear the selection after removing images
-    setSelectedShapes([])
   }
 
   // Random fill function
@@ -577,7 +948,13 @@ export default function LogCabinPatternRecognition() {
     allShapeIds.forEach((shapeId) => {
       const randomIndex = Math.floor(Math.random() * highQualityFabrics.length)
       const randomFabricKey = highQualityFabrics[randomIndex]
-      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      const fabricUrl = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      newShapeImages[shapeId] = fabricUrl
+      // Add code to call onFabricSelect when a fabric is selected
+      // For example, when a user selects a fabric for a shape:
+      if (onFabricSelect) {
+        onFabricSelect(shapeId, fabricUrl)
+      }
     })
 
     setShapeImages(newShapeImages)
@@ -596,7 +973,7 @@ export default function LogCabinPatternRecognition() {
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <svg width={totalSize} height={totalSize} viewBox={`0 0 ${totalSize} ${totalSize}`}>
+        <svg width={svgSize} height={svgSize} viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (
@@ -610,30 +987,6 @@ export default function LogCabinPatternRecognition() {
             ))}
           </defs>
 
-          {/* Grid lines */}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`vertical-${index}`}
-              x1={index * cellSize}
-              y1={0}
-              x2={index * cellSize}
-              y2={totalSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`horizontal-${index}`}
-              x1={0}
-              y1={index * cellSize}
-              x2={totalSize}
-              y2={index * cellSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-
           {/* Shapes */}
           {shapes.map((shape) => (
             <g key={shape.id}>
@@ -641,8 +994,8 @@ export default function LogCabinPatternRecognition() {
               {shape.hasImage && (
                 <image
                   href={shapeImages[shape.id]}
-                  width={totalSize}
-                  height={totalSize}
+                  width={svgSize * 2.16}
+                  height={svgSize * 2.16}
                   preserveAspectRatio="xMidYMid slice"
                   clipPath={`url(#clip-${shape.id})`}
                 />
@@ -711,27 +1064,27 @@ export default function LogCabinPatternRecognition() {
       )}
 
       {/* Camera and image controls */}
-      <div className="flex flex-row gap-3 justify-center">
+      <div className="flex gap-4 flex-wrap justify-center">
         {!showCamera ? (
           <>
             <div
-              className="flex-1 bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
               onClick={startCamera}
             >
               <div className="bg-gray-200 rounded-full p-2 mr-3">
                 <Camera size={16} className="text-black" />
               </div>
-              <span className="text-lg font-serif font-bold whitespace-nowrap">Scan Fabric</span>
+              <span className="text-lg font-serif font-bold">Scan Fabric</span>
             </div>
 
             <div
-              className="flex-1 bg-white text-black border border-black rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
+              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
               onClick={randomFill}
             >
               <div className="bg-gray-200 rounded-full p-2 mr-3">
                 <Shuffle size={16} className="text-black" />
               </div>
-              <span className="text-lg font-serif font-bold whitespace-nowrap">Random Fill</span>
+              <span className="text-lg font-serif font-bold">Random Fill</span>
             </div>
           </>
         ) : (
@@ -772,24 +1125,6 @@ export default function LogCabinPatternRecognition() {
           </>
         )}
       </div>
-
-      {/* Fabric samples */}
-      {!showCamera && (
-        <div className="grid grid-cols-3 gap-4 mt-2">
-          {FEATURED_FABRICS.map((fabricKey) => (
-            <div key={fabricKey} className="flex flex-col items-center">
-              <div className="w-20 h-20 border border-gray-300 overflow-hidden">
-                <img
-                  src={FABRIC_TEXTURES[fabricKey as keyof typeof FABRIC_TEXTURES] || "/placeholder.svg"}
-                  alt={FABRIC_NAMES[fabricKey as keyof typeof FABRIC_NAMES]}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="text-sm mt-1">{FABRIC_NAMES[fabricKey as keyof typeof FABRIC_NAMES]}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Hidden video and canvas elements */}
       <div className={showCamera ? "block" : "hidden"}>

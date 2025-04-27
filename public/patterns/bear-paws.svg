@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Shapes" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <rect class="cls-1" x="462.86" y="462.86" width="154.29" height="154.29"/>
+  <rect class="cls-1" x="154.29" y="154.29" width="308.57" height="308.57"/>
+  <rect class="cls-1" x="154.29" y="617.14" width="308.57" height="308.57"/>
+  <rect class="cls-1" x="617.14" y="154.29" width="308.57" height="308.57"/>
+  <rect class="cls-1" x="617.14" y="617.14" width="308.57" height="308.57"/>
+  <polygon class="cls-1" points="308.57 154.29 154.29 154.29 154.29 0 308.57 154.29"/>
+  <polygon class="cls-1" points="154.29 0 308.57 0 308.57 154.29 154.29 0"/>
+  <polygon class="cls-1" points="308.57 0 462.86 0 462.86 154.29 308.57 0"/>
+  <polygon class="cls-1" points="462.86 154.29 308.57 154.29 308.57 0 462.86 154.29"/>
+  <polygon class="cls-1" points="0 154.29 154.29 154.29 154.29 308.57 0 154.29"/>
+  <polygon class="cls-1" points="0 308.57 154.29 308.57 154.29 462.86 0 308.57"/>
+  <polygon class="cls-1" points="925.71 308.57 925.71 154.29 1080 154.29 925.71 308.57"/>
+  <polygon class="cls-1" points="925.71 462.86 925.71 308.57 1080 308.57 925.71 462.86"/>
+  <polygon class="cls-1" points="925.71 0 925.71 154.29 771.43 154.29 925.71 0"/>
+  <polygon class="cls-1" points="771.43 0 771.43 154.29 617.14 154.29 771.43 0"/>
+  <polygon class="cls-1" points="617.14 154.29 617.14 0 771.43 0 617.14 154.29"/>
+  <polygon class="cls-1" points="771.43 154.29 771.43 0 925.71 0 771.43 154.29"/>
+  <polygon class="cls-1" points="771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71"/>
+  <polygon class="cls-1" points="617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71"/>
+  <polygon class="cls-1" points="1080 925.71 925.71 925.71 925.71 771.43 1080 925.71"/>
+  <polygon class="cls-1" points="1080 771.43 925.71 771.43 925.71 617.14 1080 771.43"/>
+  <polygon class="cls-1" points="154.29 771.43 154.29 925.71 0 925.71 154.29 771.43"/>
+  <polygon class="cls-1" points="154.29 617.14 154.29 771.43 0 771.43 154.29 617.14"/>
+  <polygon class="cls-1" points="154.29 1080 154.29 925.71 308.57 925.71 154.29 1080"/>
+  <polygon class="cls-1" points="308.57 1080 308.57 925.71 462.86 925.71 308.57 1080"/>
+  <rect class="cls-1" x="0" y="0" width="154.29" height="154.29"/>
+  <rect class="cls-1" x="925.71" y="0" width="154.29" height="154.29"/>
+  <rect class="cls-1" x="462.86" y="0" width="154.29" height="462.86"/>
+  <polygon class="cls-1" points="771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71"/>
+  <polygon class="cls-1" points="925.71 1080 771.43 1080 771.43 925.71 925.71 1080"/>
+  <polygon class="cls-1" points="771.43 1080 617.14 1080 617.14 925.71 771.43 1080"/>
+  <polygon class="cls-1" points="617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71"/>
+  <polygon class="cls-1" points="154.29 1080 154.29 925.71 308.57 925.71 154.29 1080"/>
+  <polygon class="cls-1" points="308.57 1080 308.57 925.71 462.86 925.71 308.57 1080"/>
+  <polygon class="cls-1" points="462.86 925.71 462.86 1080 308.57 1080 462.86 925.71"/>
+  <polygon class="cls-1" points="308.57 925.71 308.57 1080 154.29 1080 308.57 925.71"/>
+  <rect class="cls-1" x="925.71" y="925.71" width="154.29" height="154.29"/>
+  <rect class="cls-1" x="0" y="925.71" width="154.29" height="154.29"/>
+  <rect class="cls-1" x="462.86" y="617.14" width="154.29" height="462.86"/>
+  <polygon class="cls-1" points="0 925.71 0 771.43 154.29 771.43 0 925.71"/>
+  <polygon class="cls-1" points="0 771.43 0 617.14 154.29 617.14 0 771.43"/>
+  <polygon class="cls-1" points="154.29 462.86 0 462.86 0 308.57 154.29 462.86"/>
+  <polygon class="cls-1" points="154.29 308.57 0 308.57 0 154.29 154.29 308.57"/>
+  <rect class="cls-1" x="0" y="462.86" width="462.86" height="154.29"/>
+  <polygon class="cls-1" points="1080 154.29 1080 308.57 925.71 308.57 1080 154.29"/>
+  <polygon class="cls-1" points="1080 308.57 1080 462.86 925.71 462.86 1080 308.57"/>
+  <polygon class="cls-1" points="925.71 617.14 1080 617.14 1080 771.43 925.71 617.14"/>
+  <polygon class="cls-1" points="925.71 771.43 1080 771.43 1080 925.71 925.71 771.43"/>
+  <rect class="cls-1" x="617.14" y="462.86" width="462.86" height="154.29"/>
+</svg>

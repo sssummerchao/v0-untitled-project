@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Shapes" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <rect class="cls-1" width="946" height="135"/>
+  <rect class="cls-1" x="946" width="134" height="1080"/>
+  <rect class="cls-1" y="135" width="136" height="945"/>
+  <rect class="cls-1" x="136" y="945" width="810" height="135"/>
+  <rect class="cls-1" x="136" y="135" width="675" height="135"/>
+  <rect class="cls-1" x="811" y="135" width="135" height="810"/>
+  <rect class="cls-1" x="136" y="270" width="135" height="675"/>
+  <rect class="cls-1" x="271" y="810" width="540" height="135"/>
+  <rect class="cls-1" x="271" y="405" width="135" height="405"/>
+  <rect class="cls-1" x="271" y="270" width="405" height="135"/>
+  <rect class="cls-1" x="676" y="270" width="135" height="540"/>
+  <rect class="cls-1" x="406" y="675" width="270" height="135"/>
+  <rect class="cls-1" x="406" y="405" width="270" height="270"/>
+</svg>

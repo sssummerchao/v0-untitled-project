@@ -5,25 +5,25 @@ const patterns = [
   {
     id: "north-star",
     name: "North Star",
-    image: "/north-star.png",
+    image: "/north-star-quilt.png",
     rotation: "7.37deg",
   },
   {
     id: "log-cabin",
     name: "Log Cabin",
-    image: "/log-cabin.png",
+    image: "/log-cabin-quilt.png",
     rotation: "-8deg",
   },
   {
     id: "crossroads",
     name: "Crossroads",
-    image: "/squares.png",
+    image: "/crossroads-quilt.png",
     rotation: "3.17deg",
   },
   {
     id: "bear-paws",
     name: "Bear Paws",
-    image: "/bear-paws.png",
+    image: "/bear-paws-quilt.png",
     rotation: "6.48deg",
   },
 ]

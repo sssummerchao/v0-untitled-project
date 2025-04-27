@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-// Update imports to include the new constants
 import {
   FABRIC_TEXTURES,
   FABRIC_NAMES,
@@ -13,13 +11,10 @@ import {
   FABRIC_CLASS_MAPPING,
 } from "./fabric-constants"
 
-// Import the fabric textures and names from the main component
-// import { FABRIC_TEXTURES, FABRIC_NAMES, FEATURED_FABRICS, ALL_FABRIC_KEYS } from "./fabric-constants"
-import { FEATURED_FABRICS } from "./fabric-constants"
-
-export default function LogCabinPatternRecognition() {
+// Add the onFabricSelect prop to the component
+export default function LogCabinSVGPattern({ onFabricSelect }) {
   // State for selected shapes and fabric images
-  const [selectedShapes, setSelectedShapes] = useState<string[]>([])
+  const [selectedShapes, setSelectedShapes] = useState<string[]>(["shape-4", "shape-9"])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
   const [showCamera, setShowCamera] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -34,60 +29,134 @@ export default function LogCabinPatternRecognition() {
 
   // Refs for video and canvas elements
   const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Grid size
-  const gridSize = 4
-  const cellSize = 100
-  const totalSize = gridSize * cellSize
-
-  // Define the Log Cabin pattern layout
-  const patternLayout = [
-    ["cabin", "cabin", "cabin", "cabin"],
-    ["cabin", "center", "center", "cabin"],
-    ["cabin", "center", "center", "cabin"],
-    ["cabin", "cabin", "cabin", "cabin"],
+  // Define the shapes based on the SVG
+  const shapes = [
+    {
+      id: "shape-0",
+      x: 0,
+      y: 0,
+      width: 946,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-0"),
+      hasImage: "shape-0" in shapeImages,
+    },
+    {
+      id: "shape-1",
+      x: 946,
+      y: 0,
+      width: 134,
+      height: 1080,
+      isSelected: selectedShapes.includes("shape-1"),
+      hasImage: "shape-1" in shapeImages,
+    },
+    {
+      id: "shape-2",
+      x: 0,
+      y: 135,
+      width: 136,
+      height: 945,
+      isSelected: selectedShapes.includes("shape-2"),
+      hasImage: "shape-2" in shapeImages,
+    },
+    {
+      id: "shape-3",
+      x: 136,
+      y: 945,
+      width: 810,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-3"),
+      hasImage: "shape-3" in shapeImages,
+    },
+    {
+      id: "shape-4",
+      x: 136,
+      y: 135,
+      width: 675,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-4"),
+      hasImage: "shape-4" in shapeImages,
+    },
+    {
+      id: "shape-5",
+      x: 811,
+      y: 135,
+      width: 135,
+      height: 810,
+      isSelected: selectedShapes.includes("shape-5"),
+      hasImage: "shape-5" in shapeImages,
+    },
+    {
+      id: "shape-6",
+      x: 136,
+      y: 270,
+      width: 135,
+      height: 675,
+      isSelected: selectedShapes.includes("shape-6"),
+      hasImage: "shape-6" in shapeImages,
+    },
+    {
+      id: "shape-7",
+      x: 271,
+      y: 810,
+      width: 540,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-7"),
+      hasImage: "shape-7" in shapeImages,
+    },
+    {
+      id: "shape-8",
+      x: 271,
+      y: 405,
+      width: 135,
+      height: 405,
+      isSelected: selectedShapes.includes("shape-8"),
+      hasImage: "shape-8" in shapeImages,
+    },
+    {
+      id: "shape-9",
+      x: 271,
+      y: 270,
+      width: 405,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-9"),
+      hasImage: "shape-9" in shapeImages,
+    },
+    {
+      id: "shape-10",
+      x: 676,
+      y: 270,
+      width: 135,
+      height: 540,
+      isSelected: selectedShapes.includes("shape-10"),
+      hasImage: "shape-10" in shapeImages,
+    },
+    {
+      id: "shape-11",
+      x: 406,
+      y: 675,
+      width: 270,
+      height: 135,
+      isSelected: selectedShapes.includes("shape-11"),
+      hasImage: "shape-11" in shapeImages,
+    },
+    {
+      id: "shape-12",
+      x: 406,
+      y: 405,
+      width: 270,
+      height: 270,
+      isSelected: selectedShapes.includes("shape-12"),
+      hasImage: "shape-12" in shapeImages,
+    },
   ]
-
-  // Generate shapes for the pattern
-  const shapes = []
-
-  for (let row = 0; row < gridSize; row++) {
-    for (let col = 0; col < gridSize; col++) {
-      // Get the shape type from the layout
-      const shapeType = patternLayout[row][col]
-
-      // Calculate coordinates
-      const x = col * cellSize
-      const y = row * cellSize
-
-      // Each cell has a unique ID
-      const cellId = `${row}-${col}`
-
-      // All shapes are squares in this simplified version
-      shapes.push({
-        id: cellId,
-        type: "square",
-        x: x,
-        y: y,
-        width: cellSize,
-        height: cellSize,
-        isSelected: selectedShapes.includes(cellId),
-        hasImage: cellId in shapeImages,
-      })
-    }
-  }
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    console.log(`Shape clicked: ${id}`)
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
-  }
-
-  // Clear all selections
-  const clearSelections = () => {
-    setSelectedShapes([])
   }
 
   // Start webcam
@@ -98,9 +167,18 @@ export default function LogCabinPatternRecognition() {
       })
       setStream(mediaStream)
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-      }
+      // Ensure the video element exists before setting srcObject
+      console.log("Video ref status:", videoRef.current ? "exists" : "null")
+
+      // Set a small timeout to ensure DOM is ready
+      setTimeout(() => {
+        if (videoRef.current) {
+          console.log("Setting video source after delay...")
+          videoRef.current.srcObject = mediaStream
+        } else {
+          console.error("Video ref is still null after delay")
+        }
+      }, 100) // Small delay to ensure DOM is ready
 
       setShowCamera(true)
       setRecognizedFabric(null)
@@ -121,7 +199,7 @@ export default function LogCabinPatternRecognition() {
     setIsRecognizing(false)
   }
 
-  // Update the loadModel function to be more robust
+  // Add this function to load the Teachable Machine model
   const loadModel = async () => {
     try {
       setIsModelLoading(true)
@@ -308,7 +386,7 @@ export default function LogCabinPatternRecognition() {
                 }
               }
 
-              // In the recognizeFabric function, replace the fabricMapping with:
+              // Map the Teachable Machine class to our fabric types
               const fabricMapping = FABRIC_CLASS_MAPPING
 
               fabricType = fabricMapping[highestClass] || "fabric1" // Default to fabric1 if no mapping
@@ -321,7 +399,8 @@ export default function LogCabinPatternRecognition() {
             }
           } else {
             // Fallback to the original algorithm if model is not available
-            // Get image data for analysis
+
+            // Simple color analysis for fabric recognition
             const imageData = context.getImageData(0, 0, canvas.width, canvas.height)
             const data = imageData.data
 
@@ -357,7 +436,7 @@ export default function LogCabinPatternRecognition() {
             }
             variance = Math.sqrt(variance / pixelCount)
 
-            // Use the existing fabric recognition logic
+            // Determine fabric type based on color analysis
             // Predominantly dark (black/navy)
             if (brightness < 60) {
               if (variance > 70) {
@@ -474,6 +553,7 @@ export default function LogCabinPatternRecognition() {
 
           // Store the currently selected shapes to apply images to
           const shapesToUpdate = [...selectedShapes]
+          const fabricUrl = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
 
           // Simulate processing time
           setTimeout(() => {
@@ -486,11 +566,17 @@ export default function LogCabinPatternRecognition() {
             // Apply the fabric texture to selected shapes
             if (shapesToUpdate.length > 0) {
               const newShapeImages = { ...shapeImages }
-              shapesToUpdate.forEach((shapeId) => {
-                newShapeImages[shapeId] = FABRIC_TEXTURES[fabricType as keyof typeof FABRIC_TEXTURES]
-              })
-              setShapeImages(newShapeImages)
 
+              shapesToUpdate.forEach((shapeId) => {
+                newShapeImages[shapeId] = fabricUrl
+                // Add code to call onFabricSelect when a fabric is selected
+                // For example, when a user selects a fabric for a shape:
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
+              })
+
+              setShapeImages(newShapeImages)
               // Clear the selection after applying images
               setSelectedShapes([])
             }
@@ -504,6 +590,7 @@ export default function LogCabinPatternRecognition() {
 
           // Use fallback method - select a random fabric
           const randomFabricKey = ALL_FABRIC_KEYS[Math.floor(Math.random() * ALL_FABRIC_KEYS.length)]
+          const fabricUrl = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
           const shapesToUpdate = [...selectedShapes]
 
           setTimeout(() => {
@@ -515,9 +602,14 @@ export default function LogCabinPatternRecognition() {
             // Apply the random fabric texture to selected shapes
             if (shapesToUpdate.length > 0) {
               const newShapeImages = { ...shapeImages }
+
               shapesToUpdate.forEach((shapeId) => {
-                newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+                newShapeImages[shapeId] = fabricUrl
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
               })
+
               setShapeImages(newShapeImages)
               setSelectedShapes([])
             }
@@ -529,27 +621,9 @@ export default function LogCabinPatternRecognition() {
     }
   }
 
-  // Clear images from selected shapes
-  const clearSelectedImages = () => {
-    if (selectedShapes.length === 0) return
-
-    const newShapeImages = { ...shapeImages }
-    selectedShapes.forEach((shapeId) => {
-      delete newShapeImages[shapeId]
-    })
-
-    setShapeImages(newShapeImages)
-
-    // Clear the selection after removing images
-    setSelectedShapes([])
-  }
-
   // Random fill function
   const randomFill = () => {
     const newShapeImages = { ...shapeImages }
-
-    // Get all shape IDs
-    const allShapeIds = shapes.map((shape) => shape.id)
 
     // Filter to only use high-quality fabric images (not training images)
     const highQualityFabrics = [
@@ -574,10 +648,14 @@ export default function LogCabinPatternRecognition() {
     ]
 
     // For each shape, assign a random high-quality fabric
-    allShapeIds.forEach((shapeId) => {
+    shapes.forEach((shape) => {
       const randomIndex = Math.floor(Math.random() * highQualityFabrics.length)
       const randomFabricKey = highQualityFabrics[randomIndex]
-      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      const fabricUrl = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      newShapeImages[shape.id] = fabricUrl
+      if (onFabricSelect) {
+        onFabricSelect(shape.id, fabricUrl)
+      }
     })
 
     setShapeImages(newShapeImages)
@@ -593,211 +671,169 @@ export default function LogCabinPatternRecognition() {
     }
   }, [stream])
 
+  // Calculate scale factor for rendering
+  const svgWidth = 1080
+  const svgHeight = 1080
+  const displayWidth = 500
+  const scaleX = displayWidth / svgWidth
+
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <svg width={totalSize} height={totalSize} viewBox={`0 0 ${totalSize} ${totalSize}`}>
+    <div className="flex flex-col md:flex-row gap-8">
+      <div
+        className="border border-gray-300 rounded-lg overflow-hidden relative"
+        style={{ width: "500px", height: "500px" }}
+      >
+        <svg
+          width={displayWidth}
+          height={displayWidth}
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+        >
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (
               <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                {shape.type === "triangle" ? (
-                  <polygon points={shape.points} />
-                ) : (
-                  <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
-                )}
+                <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
               </clipPath>
             ))}
           </defs>
 
-          {/* Grid lines */}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`vertical-${index}`}
-              x1={index * cellSize}
-              y1={0}
-              x2={index * cellSize}
-              y2={totalSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-          {Array.from({ length: gridSize + 1 }).map((_, index) => (
-            <line
-              key={`horizontal-${index}`}
-              x1={0}
-              y1={index * cellSize}
-              x2={totalSize}
-              y2={index * cellSize}
-              stroke="#C7C7C7"
-              strokeWidth="1"
-            />
-          ))}
-
-          {/* Shapes */}
+          {/* Render each shape */}
           {shapes.map((shape) => (
             <g key={shape.id}>
               {/* If this shape has an image, show it clipped to the shape */}
               {shape.hasImage && (
                 <image
                   href={shapeImages[shape.id]}
-                  width={totalSize}
-                  height={totalSize}
+                  x="0"
+                  y="0"
+                  width={svgWidth}
+                  height={svgHeight}
                   preserveAspectRatio="xMidYMid slice"
                   clipPath={`url(#clip-${shape.id})`}
                 />
               )}
 
               {/* Shape outline and click area */}
-              {shape.type === "triangle" ? (
-                <polygon
-                  points={shape.points}
-                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
-                  onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
-                />
-              ) : (
-                <rect
-                  x={shape.x}
-                  y={shape.y}
-                  width={shape.width}
-                  height={shape.height}
-                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
-                  onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
-                />
-              )}
+              <rect
+                x={shape.x}
+                y={shape.y}
+                width={shape.width}
+                height={shape.height}
+                fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
+                stroke="#C7C7C7"
+                strokeWidth="4"
+                onClick={() => handleShapeClick(shape.id)}
+                className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
+              />
             </g>
           ))}
         </svg>
       </div>
 
-      {/* Selection info */}
-      <div className="text-sm text-gray-500">
-        {selectedShapes.length === 0
-          ? "No shapes selected"
-          : `${selectedShapes.length} shape${selectedShapes.length > 1 ? "s" : ""} selected`}
-      </div>
+      <div className="flex flex-col gap-6">
+        {/* Selection info */}
+        <div className="text-sm text-gray-500">
+          {selectedShapes.length === 0
+            ? "No shapes selected"
+            : `${selectedShapes.length} shape${selectedShapes.length > 1 ? "s" : ""} selected`}
+        </div>
 
-      {isModelLoading && (
-        <Alert className="max-w-md">
-          <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
-          <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
-        </Alert>
-      )}
-
-      {modelError && (
-        <Alert className="max-w-md" variant="destructive">
-          <AlertTitle>Model Loading Error</AlertTitle>
-          <AlertDescription>{modelError}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Fabric recognition result */}
-      {recognitionMessage && (
-        <Alert className="max-w-md">
-          <Scan className="h-4 w-4" />
-          <AlertTitle>Fabric Recognition</AlertTitle>
-          <AlertDescription>{recognitionMessage}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Camera and image controls */}
-      <div className="flex flex-row gap-3 justify-center">
-        {!showCamera ? (
-          <>
-            <div
-              className="flex-1 bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
-              onClick={startCamera}
-            >
-              <div className="bg-gray-200 rounded-full p-2 mr-3">
-                <Camera size={16} className="text-black" />
-              </div>
-              <span className="text-lg font-serif font-bold whitespace-nowrap">Scan Fabric</span>
-            </div>
-
-            <div
-              className="flex-1 bg-white text-black border border-black rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
-              onClick={randomFill}
-            >
-              <div className="bg-gray-200 rounded-full p-2 mr-3">
-                <Shuffle size={16} className="text-black" />
-              </div>
-              <span className="text-lg font-serif font-bold whitespace-nowrap">Random Fill</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div
-              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
-              onClick={recognizeFabric}
-              style={{ opacity: isRecognizing ? 0.7 : 1 }}
-            >
-              <div className="bg-gray-200 rounded-full p-2 mr-3">
-                <Scan size={16} className="text-black" />
-              </div>
-              <span className="text-lg font-serif font-bold">
-                {isRecognizing ? "Analyzing..." : "Recognize Fabric"}
-              </span>
-            </div>
-
-            <div
-              className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
-              onClick={stopCamera}
-            >
-              <div className="bg-gray-200 rounded-full p-2 mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-black"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="text-lg font-serif font-bold">Cancel</span>
-            </div>
-          </>
+        {isModelLoading && (
+          <Alert className="max-w-md">
+            <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
+            <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
+          </Alert>
         )}
-      </div>
 
-      {/* Fabric samples */}
-      {!showCamera && (
-        <div className="grid grid-cols-3 gap-4 mt-2">
-          {FEATURED_FABRICS.map((fabricKey) => (
-            <div key={fabricKey} className="flex flex-col items-center">
-              <div className="w-20 h-20 border border-gray-300 overflow-hidden">
-                <img
-                  src={FABRIC_TEXTURES[fabricKey as keyof typeof FABRIC_TEXTURES] || "/placeholder.svg"}
-                  alt={FABRIC_NAMES[fabricKey as keyof typeof FABRIC_NAMES]}
-                  className="w-full h-full object-cover"
-                />
+        {modelError && (
+          <Alert className="max-w-md" variant="destructive">
+            <AlertTitle>Model Loading Error</AlertTitle>
+            <AlertDescription>{modelError}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Fabric recognition result */}
+        {recognitionMessage && (
+          <Alert className="max-w-md">
+            <Scan className="h-4 w-4" />
+            <AlertTitle>Fabric Recognition</AlertTitle>
+            <AlertDescription>{recognitionMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Camera and image controls */}
+        <div className="flex gap-4 flex-wrap justify-center">
+          {!showCamera ? (
+            <>
+              <div
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+                onClick={startCamera}
+              >
+                <div className="bg-gray-200 rounded-full p-2 mr-3">
+                  <Camera size={16} className="text-black" />
+                </div>
+                <span className="text-lg font-serif font-bold">Scan Fabric</span>
               </div>
-              <span className="text-sm mt-1">{FABRIC_NAMES[fabricKey as keyof typeof FABRIC_NAMES]}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* Hidden video and canvas elements */}
-      <div className={showCamera ? "block" : "hidden"}>
-        <div className="relative border rounded-lg overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline muted className="w-[320px] h-[240px] object-cover" />
+              <div
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+                onClick={randomFill}
+              >
+                <div className="bg-gray-200 rounded-full p-2 mr-3">
+                  <Shuffle size={16} className="text-black" />
+                </div>
+                <span className="text-lg font-serif font-bold">Random Fill</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+                onClick={recognizeFabric}
+                style={{ opacity: isRecognizing ? 0.7 : 1 }}
+              >
+                <div className="bg-gray-200 rounded-full p-2 mr-3">
+                  <Scan size={16} className="text-black" />
+                </div>
+                <span className="text-lg font-serif font-bold">
+                  {isRecognizing ? "Analyzing..." : "Recognize Fabric"}
+                </span>
+              </div>
+
+              <div
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
+                onClick={stopCamera}
+              >
+                <div className="bg-gray-200 rounded-full p-2 mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-black"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <span className="text-lg font-serif font-bold">Cancel</span>
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Hidden video and canvas elements */}
+        <div className={showCamera ? "block" : "hidden"}>
+          <div className="relative border rounded-lg overflow-hidden">
+            <video ref={videoRef} autoPlay playsInline muted className="w-[320px] h-[240px] object-cover" />
+          </div>
+        </div>
+        <canvas ref={recognitionCanvasRef} className="hidden" />
       </div>
-      <canvas ref={recognitionCanvasRef} className="hidden" />
     </div>
   )
 }
