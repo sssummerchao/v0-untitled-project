@@ -23,11 +23,27 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<SVGSVGElement>(null)
   const [drawingGroupId] = useState(`drawing-group-${Math.random().toString(36).substring(2, 9)}`)
+  const [actualViewBox, setActualViewBox] = useState(viewBox)
 
   // Extract viewBox dimensions
-  const viewBoxDimensions = viewBox.split(" ").map(Number)
-  const svgWidth = viewBoxDimensions[2]
-  const svgHeight = viewBoxDimensions[3]
+  const viewBoxDimensions = actualViewBox.split(" ").map(Number)
+  const viewBoxMinX = viewBoxDimensions[0] || 0
+  const viewBoxMinY = viewBoxDimensions[1] || 0
+  const svgWidth = viewBoxDimensions[2] || 1080
+  const svgHeight = viewBoxDimensions[3] || 1080
+
+  // Get the actual viewBox from the SVG element
+  useEffect(() => {
+    if (svgRef.current) {
+      const svgViewBox = svgRef.current.getAttribute("viewBox")
+      if (svgViewBox) {
+        setActualViewBox(svgViewBox)
+        console.log("Using SVG viewBox:", svgViewBox)
+      } else {
+        console.log("Using provided viewBox:", viewBox)
+      }
+    }
+  }, [svgRef, viewBox])
 
   // Initialize drawing group when component mounts
   useEffect(() => {
@@ -92,8 +108,10 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
   }, [paths, svgRef, drawingGroupId])
 
   // Create a function to get the SVG point from a mouse or touch event
-  const getSVGPoint = (event: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent): SVGPoint | null => {
-    if (!svgRef.current) return null
+  const getSVGPoint = (
+    event: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent,
+  ): { x: number; y: number } | null => {
+    if (!svgRef.current || !overlayRef.current) return null
 
     // Get the client coordinates
     let clientX, clientY
@@ -105,17 +123,18 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
       clientY = (event as MouseEvent).clientY
     }
 
-    // Create a point in screen coordinates
-    const svg = svgRef.current
-    const point = svg.createSVGPoint()
-    point.x = clientX
-    point.y = clientY
+    // Get the bounding rectangle of the SVG element
+    const svgRect = svgRef.current.getBoundingClientRect()
+    const overlayRect = overlayRef.current.getBoundingClientRect()
 
-    // Convert to SVG coordinates
-    const screenCTM = svg.getScreenCTM()
-    if (!screenCTM) return null
+    // Calculate the point in SVG coordinates
+    const scaleX = svgWidth / overlayRect.width
+    const scaleY = svgHeight / overlayRect.height
 
-    return point.matrixTransform(screenCTM.inverse())
+    const x = viewBoxMinX + (clientX - overlayRect.left) * scaleX
+    const y = viewBoxMinY + (clientY - overlayRect.top) * scaleY
+
+    return { x, y }
   }
 
   // Start drawing
@@ -212,6 +231,7 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
         canvasRef.current.style.left = "0"
         canvasRef.current.style.width = "100%"
         canvasRef.current.style.height = "100%"
+        canvasRef.current.style.pointerEvents = isActive ? "auto" : "none"
       }
     }
 
@@ -222,7 +242,7 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
     return () => {
       window.removeEventListener("resize", updateOverlayDimensions)
     }
-  }, [svgRef])
+  }, [svgRef, isActive])
 
   if (!isActive) return null
 
@@ -308,7 +328,7 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
       {/* Drawing canvas overlay - positioned exactly over the SVG */}
       <div
         ref={canvasRef}
-        className="absolute inset-0 cursor-crosshair z-10"
+        className="absolute inset-0 cursor-crosshair"
         style={{
           position: "absolute",
           top: 0,
@@ -316,23 +336,24 @@ export default function FreeDrawingCanvas({ svgRef, viewBox, isActive = false }:
           width: "100%",
           height: "100%",
           pointerEvents: isActive ? "auto" : "none",
+          zIndex: 10,
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleMouseDown}
-        onTouchMove={handleMouseMove}
-        onTouchEnd={handleMouseUp}
       >
         {/* Overlay SVG for real-time drawing visualization */}
         <svg
           ref={overlayRef}
           width="100%"
           height="100%"
-          viewBox={viewBox}
+          viewBox={actualViewBox}
           style={{ position: "absolute", top: 0, left: 0 }}
           preserveAspectRatio="xMidYMid meet"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleMouseDown}
+          onTouchMove={handleMouseMove}
+          onTouchEnd={handleMouseUp}
         >
           {/* Current path being drawn */}
           {isDrawing && currentPath && (

@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -17,7 +19,19 @@ import {
 // import { FABRIC_TEXTURES, FABRIC_NAMES, FEATURED_FABRICS, ALL_FABRIC_KEYS } from "./fabric-constants"
 import { FEATURED_FABRICS } from "./fabric-constants"
 
-export default function LogCabinPatternRecognition() {
+// Add isDrawingMode prop to the component props
+interface LogCabinPatternRecognitionProps {
+  onFabricSelect: (shape: string, fabricPath: string) => void
+  svgRef: React.RefObject<SVGSVGElement>
+  isDrawingMode?: boolean
+}
+
+// Update the component to accept isDrawingMode prop
+export default function LogCabinPatternRecognition({
+  onFabricSelect,
+  svgRef,
+  isDrawingMode = false,
+}: LogCabinPatternRecognitionProps) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -81,6 +95,9 @@ export default function LogCabinPatternRecognition() {
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    // In the handleShapeClick function, add a check for drawing mode
+    if (isDrawingMode) return // Don't select shapes in drawing mode
+
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
   }

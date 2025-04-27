@@ -206,11 +206,9 @@ export default function CreateLogCabinPage() {
           </p>
 
           <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
-            <div className="relative">
-              <LogCabinSVGPattern onFabricSelect={handleFabricSelect} svgRef={svgRef} />
-
-              {/* Free drawing canvas (only active in drawing mode) */}
-              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 400 400" isActive={mode === "draw"} />
+            <div className="relative" style={{ width: "500px", height: "500px" }}>
+              <LogCabinSVGPattern onFabricSelect={handleFabricSelect} svgRef={svgRef} isDrawingMode={mode === "draw"} />
+              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 1080 1080" isActive={mode === "draw"} />
             </div>
           </div>
 

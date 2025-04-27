@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -13,7 +15,19 @@ import {
   FABRIC_CLASS_MAPPING,
 } from "./fabric-constants"
 
-export default function BearPawsPatternRecognition() {
+// Add isDrawingMode prop to the component props
+interface BearPawsPatternRecognitionProps {
+  onFabricSelect: (shape: string, fabricPath: string) => void
+  svgRef: React.RefObject<SVGSVGElement>
+  isDrawingMode?: boolean
+}
+
+// Update the component to accept isDrawingMode prop
+export default function BearPawsPatternRecognition({
+  onFabricSelect,
+  svgRef,
+  isDrawingMode = false,
+}: BearPawsPatternRecognitionProps) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -30,7 +44,6 @@ export default function BearPawsPatternRecognition() {
 
   // Refs for video and canvas elements
   const videoRef = useRef<HTMLVideoElement>(null)
-  const svgRef = useRef<SVGSVGElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
 
   // SVG container size
@@ -443,6 +456,7 @@ export default function BearPawsPatternRecognition() {
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    if (isDrawingMode) return // Don't select shapes in drawing mode
     console.log(`Shape clicked: ${id}`)
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))

@@ -208,11 +208,13 @@ export default function CreateBearPawsPage() {
           </p>
 
           <div className="flex flex-col items-center">
-            <div className="w-full max-w-5xl relative">
-              <BearPawsPatternRecognition onFabricSelect={handleFabricSelect} svgRef={svgRef} />
-
-              {/* Free drawing canvas (only active in drawing mode) */}
-              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 400 400" isActive={mode === "draw"} />
+            <div className="relative" style={{ width: "500px", height: "500px" }}>
+              <BearPawsPatternRecognition
+                onFabricSelect={handleFabricSelect}
+                svgRef={svgRef}
+                isDrawingMode={mode === "draw"}
+              />
+              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 1080 1080" isActive={mode === "draw"} />
             </div>
           </div>
 

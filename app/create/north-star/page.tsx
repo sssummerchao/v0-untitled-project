@@ -260,8 +260,9 @@ export default function CreateNorthStarPage() {
     document.body.removeChild(link)
   }
 
-  const handleModeChange = (newMode: "select" | "draw") => {
-    setMode(newMode)
+  // Handle mode change
+  const handleModeChange = (isDrawingMode: boolean) => {
+    setMode(isDrawingMode ? "draw" : "select")
   }
 
   return (
@@ -302,7 +303,7 @@ export default function CreateNorthStarPage() {
           {/* Drawing mode selector */}
           <DrawingModeSelector onModeChange={handleModeChange} />
 
-          <div className="absolute bottom-8 right-8 z-10">
+          <div className="fixed bottom-8 right-8 z-10">
             <button onClick={handleDownloadImage} className="bg-transparent border-0 p-0 cursor-pointer">
               <div className="relative">
                 <Image

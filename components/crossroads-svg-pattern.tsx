@@ -15,14 +15,19 @@ import {
   TEACHABLE_MACHINE_URL,
 } from "./fabric-constants"
 
-// Update the interface to include svgRef
+// Add isDrawingMode prop to the component props
 interface CrossroadsSvgPatternProps {
   onFabricSelect?: (shape: string, fabricPath: string) => void
   svgRef?: React.RefObject<SVGSVGElement>
+  isDrawingMode?: boolean
 }
 
-// Update the component to use the prop
-export default function CrossroadsSvgPattern({ onFabricSelect, svgRef }: CrossroadsSvgPatternProps) {
+// Update the component to accept isDrawingMode prop
+export default function CrossroadsSvgPattern({
+  onFabricSelect,
+  svgRef,
+  isDrawingMode = false,
+}: CrossroadsSvgPatternProps) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -160,6 +165,8 @@ export default function CrossroadsSvgPattern({ onFabricSelect, svgRef }: Crossro
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
+    if (isDrawingMode) return // Don't select shapes in drawing mode
+
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
   }

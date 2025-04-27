@@ -184,11 +184,13 @@ export default function CreateCrossroadsPage() {
           </p>
 
           <div className="flex justify-center">
-            <div className="relative" style={{ width: "fit-content" }}>
-              <CrossroadsSvgPattern onFabricSelect={handleFabricSelect} svgRef={svgRef} />
-
-              {/* Free drawing canvas (only active in drawing mode) */}
-              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 400 400" isActive={mode === "draw"} />
+            <div className="relative">
+              <CrossroadsSvgPattern
+                onFabricSelect={handleFabricSelect}
+                svgRef={svgRef}
+                isDrawingMode={mode === "draw"}
+              />
+              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 500 500" isActive={mode === "draw"} />
             </div>
           </div>
 
