@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Shapes" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <polygon class="cls-1" points="271 270 271 0 541 270 271 270"/>
+  <polygon class="cls-1" points="541 0 541 270 271 0 541 0"/>
+  <polygon class="cls-1" points="541 0 541 270 811 0 541 0"/>
+  <polygon class="cls-1" points="541 1080 541 810 811 1080 541 1080"/>
+  <polygon class="cls-1" points="541 1080 541 810 271 1080 541 1080"/>
+  <polygon class="cls-1" points="1080 540 811 540 1080 810 1080 540"/>
+  <polygon class="cls-1" points="1080 540 811 540 1080 270 1080 540"/>
+  <polygon class="cls-1" points="0 540 271 540 0 810 0 540"/>
+  <polygon class="cls-1" points="271 270 0 270 271 540 271 270"/>
+  <polygon class="cls-1" points="811 270 811 0 541 270 811 270"/>
+  <polygon class="cls-1" points="811 270 1080 270 811 540 811 270"/>
+  <polygon class="cls-1" points="811 810 1080 810 811 540 811 810"/>
+  <polygon class="cls-1" points="271 810 0 810 271 540 271 810"/>
+  <polygon class="cls-1" points="0 540 271 540 0 270 0 540"/>
+  <polygon class="cls-1" points="811 810 811 1080 541 810 811 810"/>
+  <polygon class="cls-1" points="271 810 271 1080 541 810 271 810"/>
+  <rect class="cls-1" x="271" y="270" width="540" height="540"/>
+  <polygon class="cls-1" points="271 270 0 270 1 0 271 0 271 270"/>
+  <rect class="cls-1" x="811" y="0" width="269" height="270"/>
+  <rect class="cls-1" x="811" y="810" width="269" height="270"/>
+  <rect class="cls-1" x="0" y="810" width="271" height="270"/>
+</svg>

@@ -12,7 +12,7 @@ import {
 } from "./fabric-constants"
 
 // Add the onFabricSelect prop to the component
-export default function LogCabinSVGPattern({ onFabricSelect }) {
+export default function LogCabinSVGPattern({ onFabricSelect, svgRef, isDrawingMode, style }) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>(["shape-4", "shape-9"])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -684,11 +684,18 @@ export default function LogCabinSVGPattern({ onFabricSelect }) {
         style={{ width: "500px", height: "500px" }}
       >
         <svg
+          ref={svgRef}
           width={displayWidth}
           height={displayWidth}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
           preserveAspectRatio="xMidYMid meet"
+          style={{
+            ...style,
+            pointerEvents: isDrawingMode ? "none" : "auto",
+          }}
         >
+          {/* White background */}
+          <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (

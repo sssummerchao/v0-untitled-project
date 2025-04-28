@@ -972,8 +972,17 @@ export default function BearPawsSVGPattern({
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <svg width={svgSize} height={svgSize} viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
+      <div className="border border-gray-300 rounded-lg overflow-hidden bg-white" style={{ backgroundColor: "white" }}>
+        <svg
+          width={svgSize}
+          height={svgSize}
+          viewBox="0 0 1080 1080"
+          preserveAspectRatio="xMidYMid meet"
+          style={{ backgroundColor: "white" }}
+          fill="white"
+        >
+          {/* White background */}
+          <rect x="0" y="0" width="1080" height="1080" fill="white" style={{ zIndex: -1 }} />
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (
@@ -1006,11 +1015,12 @@ export default function BearPawsSVGPattern({
                 <polygon
                   points={shape.points}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
+                  stroke="#000000"
+                  strokeWidth="2"
+                  strokeLinejoin="miter"
+                  strokeLinecap="butt"
                   onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  className="cursor-pointer transition-colors duration-200"
                   style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
                 />
               ) : (
@@ -1020,11 +1030,12 @@ export default function BearPawsSVGPattern({
                   width={shape.width}
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
+                  stroke="#000000"
+                  strokeWidth="2"
+                  strokeLinejoin="miter"
+                  strokeLinecap="butt"
                   onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  className="cursor-pointer transition-colors duration-200"
                   style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
                 />
               )}

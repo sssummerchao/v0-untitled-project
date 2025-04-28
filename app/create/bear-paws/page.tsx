@@ -7,6 +7,15 @@ import { STORAGE_KEYS } from "@/utils/pattern-constants"
 import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
+import { downloadPattern } from "@/utils/svg-capture"
+
+const DEFAULT_COLORS = {
+  BEAR_PAWS: {
+    background: "#F8E71C",
+    claws: "#F44336",
+    pawPad: "#2196F3",
+  },
+}
 
 export default function CreateBearPawsPage() {
   const [fabricSelections, setFabricSelections] = useState({})
@@ -14,7 +23,7 @@ export default function CreateBearPawsPage() {
   const svgRef = useRef<SVGSVGElement>(null)
   const [selectedFabrics, setSelectedFabrics] = useState({})
 
-  // Save fabric selections when navigating to the print page
+  // Save fabric selections
   const saveFabricSelections = () => {
     localStorage.setItem(STORAGE_KEYS.BEAR_PAWS, JSON.stringify(fabricSelections))
   }
@@ -35,143 +44,17 @@ export default function CreateBearPawsPage() {
   }
 
   // Function to download the pattern as an image
-  const handleDownloadImage = () => {
-    const canvas = document.createElement("canvas")
-    canvas.width = 600
-    canvas.height = 600
-    const ctx = canvas.getContext("2d")
+  const handleDownloadImage = async () => {
+    // Save fabric selections first
+    saveFabricSelections()
 
-    if (!ctx) return
-
-    // Draw the Bear Paws pattern with fabric selections if available
-    if (Object.keys(selectedFabrics).length > 0) {
-      // Draw with selected fabrics
-      const size = 600
-      const blockSize = size / 2
-
-      // Draw background squares
-      ctx.fillStyle = selectedFabrics.background ? `url(${selectedFabrics.background})` : "#F8E71C"
-      ctx.fillRect(0, 0, size, size)
-
-      // Draw paw blocks
-      const drawPawBlock = (x: number, y: number) => {
-        const pawSize = blockSize
-        const smallSquareSize = pawSize / 4
-
-        // Draw small squares (claws)
-        ctx.fillStyle = selectedFabrics.claws ? `url(${selectedFabrics.claws})` : "#F44336"
-
-        // Top left
-        ctx.fillRect(x, y, smallSquareSize, smallSquareSize)
-
-        // Top right
-        ctx.fillRect(x + smallSquareSize, y, smallSquareSize, smallSquareSize)
-
-        // Bottom left
-        ctx.fillRect(x, y + smallSquareSize, smallSquareSize, smallSquareSize)
-
-        // Bottom right
-        ctx.fillRect(x + smallSquareSize, y + smallSquareSize, smallSquareSize, smallSquareSize)
-
-        // Draw large square (paw pad)
-        ctx.fillStyle = selectedFabrics.pawPad ? `url(${selectedFabrics.pawPad})` : "#2196F3"
-        ctx.fillRect(x + 2 * smallSquareSize, y + 2 * smallSquareSize, 2 * smallSquareSize, 2 * smallSquareSize)
-      }
-
-      // Draw paw blocks in each corner
-      drawPawBlock(0, 0) // Top left
-      drawPawBlock(blockSize, 0) // Top right
-      drawPawBlock(0, blockSize) // Bottom left
-      drawPawBlock(blockSize, blockSize) // Bottom right
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      const gridSize = blockSize / 8
-      for (let i = 0; i <= 16; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * gridSize, 0)
-        ctx.lineTo(i * gridSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * gridSize)
-        ctx.lineTo(size, i * gridSize)
-        ctx.stroke()
-      }
-    } else {
-      // Draw with default colors
-      const size = 600
-      const blockSize = size / 2
-
-      // Draw background squares
-      ctx.fillStyle = "#F8E71C"
-      ctx.fillRect(0, 0, size, size)
-
-      // Draw paw blocks
-      const drawPawBlock = (x: number, y: number) => {
-        const pawSize = blockSize
-        const smallSquareSize = pawSize / 4
-
-        // Draw small squares (claws)
-        ctx.fillStyle = "#F44336"
-
-        // Top left
-        ctx.fillRect(x, y, smallSquareSize, smallSquareSize)
-
-        // Top right
-        ctx.fillRect(x + smallSquareSize, y, smallSquareSize, smallSquareSize)
-
-        // Bottom left
-        ctx.fillRect(x, y + smallSquareSize, smallSquareSize, smallSquareSize)
-
-        // Bottom right
-        ctx.fillRect(x + smallSquareSize, y + smallSquareSize, smallSquareSize, smallSquareSize)
-
-        // Draw large square (paw pad)
-        ctx.fillStyle = "#2196F3"
-        ctx.fillRect(x + 2 * smallSquareSize, y + 2 * smallSquareSize, 2 * smallSquareSize, 2 * smallSquareSize)
-      }
-
-      // Draw paw blocks in each corner
-      drawPawBlock(0, 0) // Top left
-      drawPawBlock(blockSize, 0) // Top right
-      drawPawBlock(0, blockSize) // Bottom left
-      drawPawBlock(blockSize, blockSize) // Bottom right
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      const gridSize = blockSize / 8
-      for (let i = 0; i <= 16; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * gridSize, 0)
-        ctx.lineTo(i * gridSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * gridSize)
-        ctx.lineTo(size, i * gridSize)
-        ctx.stroke()
-      }
+    if (!svgRef.current) {
+      alert("Could not find the pattern to download. Please try again.")
+      return
     }
 
-    // Create download link
-    const dataUrl = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
-    link.download = "bear-paws-quilt-pattern.png"
-    link.href = dataUrl
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    // Download the pattern
+    await downloadPattern(svgRef.current, "bear-paws-quilt-pattern.png")
   }
 
   // Handle mode change
@@ -208,8 +91,9 @@ export default function CreateBearPawsPage() {
           </p>
 
           <div className="flex flex-col items-center">
-            <div className="relative" style={{ width: "500px", height: "500px" }}>
+            <div className="relative">
               <BearPawsPatternRecognition
+                key="bear-paws-recognition"
                 onFabricSelect={handleFabricSelect}
                 svgRef={svgRef}
                 isDrawingMode={mode === "draw"}

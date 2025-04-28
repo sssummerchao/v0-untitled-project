@@ -1,12 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Camera, Scan, Shuffle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-// Import the fabric textures and names from the main component
 import {
   FABRIC_TEXTURES,
   FABRIC_NAMES,
@@ -15,19 +11,8 @@ import {
   FABRIC_CLASS_MAPPING,
 } from "./fabric-constants"
 
-// Add isDrawingMode prop to the component props
-interface BearPawsPatternRecognitionProps {
-  onFabricSelect: (shape: string, fabricPath: string) => void
-  svgRef: React.RefObject<SVGSVGElement>
-  isDrawingMode?: boolean
-}
-
-// Update the component to accept isDrawingMode prop
-export default function BearPawsPatternRecognition({
-  onFabricSelect,
-  svgRef,
-  isDrawingMode = false,
-}: BearPawsPatternRecognitionProps) {
+// Add the onFabricSelect prop to the component
+export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingMode, style }) {
   // State for selected shapes and fabric images
   const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
@@ -46,417 +31,33 @@ export default function BearPawsPatternRecognition({
   const videoRef = useRef<HTMLVideoElement>(null)
   const recognitionCanvasRef = useRef<HTMLCanvasElement>(null)
 
-  // SVG container size
-  const svgSize = 500
-
-  // Define the shapes for the Bear Paws pattern exactly matching the SVG
+  // Define the shapes based on the SVG
   const shapes = [
-    // Center square
-    {
-      id: "center-square",
-      type: "square",
-      x: 462.86,
-      y: 462.86,
-      width: 154.29,
-      height: 154.29,
-      isSelected: selectedShapes.includes("center-square"),
-      hasImage: "center-square" in shapeImages,
-    },
-    // Four large squares
-    {
-      id: "top-left-square",
-      type: "square",
-      x: 154.29,
-      y: 154.29,
-      width: 308.57,
-      height: 308.57,
-      isSelected: selectedShapes.includes("top-left-square"),
-      hasImage: "top-left-square" in shapeImages,
-    },
-    {
-      id: "bottom-left-square",
-      type: "square",
-      x: 154.29,
-      y: 617.14,
-      width: 308.57,
-      height: 308.57,
-      isSelected: selectedShapes.includes("bottom-left-square"),
-      hasImage: "bottom-left-square" in shapeImages,
-    },
-    {
-      id: "top-right-square",
-      type: "square",
-      x: 617.14,
-      y: 154.29,
-      width: 308.57,
-      height: 308.57,
-      isSelected: selectedShapes.includes("top-right-square"),
-      hasImage: "top-right-square" in shapeImages,
-    },
-    {
-      id: "bottom-right-square",
-      type: "square",
-      x: 617.14,
-      y: 617.14,
-      width: 308.57,
-      height: 308.57,
-      isSelected: selectedShapes.includes("bottom-right-square"),
-      hasImage: "bottom-right-square" in shapeImages,
-    },
-    // Top left paw triangles
-    {
-      id: "tl-paw-1",
-      type: "triangle",
-      points: "308.57 154.29 154.29 154.29 154.29 0 308.57 154.29",
-      isSelected: selectedShapes.includes("tl-paw-1"),
-      hasImage: "tl-paw-1" in shapeImages,
-    },
-    {
-      id: "tl-paw-2",
-      type: "triangle",
-      points: "154.29 0 308.57 0 308.57 154.29 154.29 0",
-      isSelected: selectedShapes.includes("tl-paw-2"),
-      hasImage: "tl-paw-2" in shapeImages,
-    },
-    {
-      id: "tl-paw-3",
-      type: "triangle",
-      points: "308.57 0 462.86 0 462.86 154.29 308.57 0",
-      isSelected: selectedShapes.includes("tl-paw-3"),
-      hasImage: "tl-paw-3" in shapeImages,
-    },
-    {
-      id: "tl-paw-4",
-      type: "triangle",
-      points: "462.86 154.29 308.57 154.29 308.57 0 462.86 154.29",
-      isSelected: selectedShapes.includes("tl-paw-4"),
-      hasImage: "tl-paw-4" in shapeImages,
-    },
-    // Left paw triangles
-    {
-      id: "left-paw-1",
-      type: "triangle",
-      points: "0 154.29 154.29 154.29 154.29 308.57 0 154.29",
-      isSelected: selectedShapes.includes("left-paw-1"),
-      hasImage: "left-paw-1" in shapeImages,
-    },
-    {
-      id: "left-paw-2",
-      type: "triangle",
-      points: "0 308.57 154.29 308.57 154.29 462.86 0 308.57",
-      isSelected: selectedShapes.includes("left-paw-2"),
-      hasImage: "left-paw-2" in shapeImages,
-    },
-    // Right paw triangles
-    {
-      id: "right-paw-1",
-      type: "triangle",
-      points: "925.71 308.57 925.71 154.29 1080 154.29 925.71 308.57",
-      isSelected: selectedShapes.includes("right-paw-1"),
-      hasImage: "right-paw-1" in shapeImages,
-    },
-    {
-      id: "right-paw-2",
-      type: "triangle",
-      points: "925.71 462.86 925.71 308.57 1080 308.57 925.71 462.86",
-      isSelected: selectedShapes.includes("right-paw-2"),
-      hasImage: "right-paw-2" in shapeImages,
-    },
-    // Top right paw triangles
-    {
-      id: "tr-paw-1",
-      type: "triangle",
-      points: "925.71 0 925.71 154.29 771.43 154.29 925.71 0",
-      isSelected: selectedShapes.includes("tr-paw-1"),
-      hasImage: "tr-paw-1" in shapeImages,
-    },
-    {
-      id: "tr-paw-2",
-      type: "triangle",
-      points: "771.43 0 771.43 154.29 617.14 154.29 771.43 0",
-      isSelected: selectedShapes.includes("tr-paw-2"),
-      hasImage: "tr-paw-2" in shapeImages,
-    },
-    {
-      id: "tr-paw-3",
-      type: "triangle",
-      points: "617.14 154.29 617.14 0 771.43 0 617.14 154.29",
-      isSelected: selectedShapes.includes("tr-paw-3"),
-      hasImage: "tr-paw-3" in shapeImages,
-    },
-    {
-      id: "tr-paw-4",
-      type: "triangle",
-      points: "771.43 154.29 771.43 0 925.71 0 771.43 154.29",
-      isSelected: selectedShapes.includes("tr-paw-4"),
-      hasImage: "tr-paw-4" in shapeImages,
-    },
-    // Bottom right paw triangles
-    {
-      id: "br-paw-1",
-      type: "triangle",
-      points: "771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71",
-      isSelected: selectedShapes.includes("br-paw-1"),
-      hasImage: "br-paw-1" in shapeImages,
-    },
-    {
-      id: "br-paw-2",
-      type: "triangle",
-      points: "617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71",
-      isSelected: selectedShapes.includes("br-paw-2"),
-      hasImage: "br-paw-2" in shapeImages,
-    },
-    // Additional triangles from the SVG
-    {
-      id: "right-paw-3",
-      type: "triangle",
-      points: "1080 925.71 925.71 925.71 925.71 771.43 1080 925.71",
-      isSelected: selectedShapes.includes("right-paw-3"),
-      hasImage: "right-paw-3" in shapeImages,
-    },
-    {
-      id: "right-paw-4",
-      type: "triangle",
-      points: "1080 771.43 925.71 771.43 925.71 617.14 1080 771.43",
-      isSelected: selectedShapes.includes("right-paw-4"),
-      hasImage: "right-paw-4" in shapeImages,
-    },
-    {
-      id: "left-paw-3",
-      type: "triangle",
-      points: "154.29 771.43 154.29 925.71 0 925.71 154.29 771.43",
-      isSelected: selectedShapes.includes("left-paw-3"),
-      hasImage: "left-paw-3" in shapeImages,
-    },
-    {
-      id: "left-paw-4",
-      type: "triangle",
-      points: "154.29 617.14 154.29 771.43 0 771.43 154.29 617.14",
-      isSelected: selectedShapes.includes("left-paw-4"),
-      hasImage: "left-paw-4" in shapeImages,
-    },
-    // Bottom left paw triangles
-    {
-      id: "bl-paw-1",
-      type: "triangle",
-      points: "154.29 1080 154.29 925.71 308.57 925.71 154.29 1080",
-      isSelected: selectedShapes.includes("bl-paw-1"),
-      hasImage: "bl-paw-1" in shapeImages,
-    },
-    {
-      id: "bl-paw-2",
-      type: "triangle",
-      points: "308.57 1080 308.57 925.71 462.86 925.71 308.57 1080",
-      isSelected: selectedShapes.includes("bl-paw-2"),
-      hasImage: "bl-paw-2" in shapeImages,
-    },
-    // Corner squares
-    {
-      id: "top-left-corner",
-      type: "square",
-      x: 0,
-      y: 0,
-      width: 154.29,
-      height: 154.29,
-      isSelected: selectedShapes.includes("top-left-corner"),
-      hasImage: "top-left-corner" in shapeImages,
-    },
-    {
-      id: "top-right-corner",
-      type: "square",
-      x: 925.71,
-      y: 0,
-      width: 154.29,
-      height: 154.29,
-      isSelected: selectedShapes.includes("top-right-corner"),
-      hasImage: "top-right-corner" in shapeImages,
-    },
-    // Middle vertical rectangles
-    {
-      id: "top-middle-rect",
-      type: "square",
-      x: 462.86,
-      y: 0,
-      width: 154.29,
-      height: 462.86,
-      isSelected: selectedShapes.includes("top-middle-rect"),
-      hasImage: "top-middle-rect" in shapeImages,
-    },
-    // Additional bottom right paw triangles
-    {
-      id: "br-paw-3",
-      type: "triangle",
-      points: "771.43 925.71 925.71 925.71 925.71 1080 771.43 925.71",
-      isSelected: selectedShapes.includes("br-paw-3"),
-      hasImage: "br-paw-3" in shapeImages,
-    },
-    {
-      id: "br-paw-4",
-      type: "triangle",
-      points: "925.71 1080 771.43 1080 771.43 925.71 925.71 1080",
-      isSelected: selectedShapes.includes("br-paw-4"),
-      hasImage: "br-paw-4" in shapeImages,
-    },
-    {
-      id: "br-paw-5",
-      type: "triangle",
-      points: "771.43 1080 617.14 1080 617.14 925.71 771.43 1080",
-      isSelected: selectedShapes.includes("br-paw-5"),
-      hasImage: "br-paw-5" in shapeImages,
-    },
-    {
-      id: "br-paw-6",
-      type: "triangle",
-      points: "617.14 925.71 771.43 925.71 771.43 1080 617.14 925.71",
-      isSelected: selectedShapes.includes("br-paw-6"),
-      hasImage: "br-paw-6" in shapeImages,
-    },
-    // Additional bottom left paw triangles
-    {
-      id: "bl-paw-3",
-      type: "triangle",
-      points: "154.29 1080 154.29 925.71 308.57 925.71 154.29 1080",
-      isSelected: selectedShapes.includes("bl-paw-3"),
-      hasImage: "bl-paw-3" in shapeImages,
-    },
-    {
-      id: "bl-paw-4",
-      type: "triangle",
-      points: "308.57 1080 308.57 925.71 462.86 925.71 308.57 1080",
-      isSelected: selectedShapes.includes("bl-paw-4"),
-      hasImage: "bl-paw-4" in shapeImages,
-    },
-    {
-      id: "bl-paw-5",
-      type: "triangle",
-      points: "462.86 925.71 462.86 1080 308.57 1080 462.86 925.71",
-      isSelected: selectedShapes.includes("bl-paw-5"),
-      hasImage: "bl-paw-5" in shapeImages,
-    },
-    {
-      id: "bl-paw-6",
-      type: "triangle",
-      points: "308.57 925.71 308.57 1080 154.29 1080 308.57 925.71",
-      isSelected: selectedShapes.includes("bl-paw-6"),
-      hasImage: "bl-paw-6" in shapeImages,
-    },
-    // Bottom corner squares
-    {
-      id: "bottom-right-corner",
-      type: "square",
-      x: 925.71,
-      y: 925.71,
-      width: 154.29,
-      height: 154.29,
-      isSelected: selectedShapes.includes("bottom-right-corner"),
-      hasImage: "bottom-right-corner" in shapeImages,
-    },
-    {
-      id: "bottom-left-corner",
-      type: "square",
-      x: 0,
-      y: 925.71,
-      width: 154.29,
-      height: 154.29,
-      isSelected: selectedShapes.includes("bottom-left-corner"),
-      hasImage: "bottom-left-corner" in shapeImages,
-    },
-    // Bottom middle rectangle
-    {
-      id: "bottom-middle-rect",
-      type: "square",
-      x: 462.86,
-      y: 617.14,
-      width: 154.29,
-      height: 462.86,
-      isSelected: selectedShapes.includes("bottom-middle-rect"),
-      hasImage: "bottom-middle-rect" in shapeImages,
-    },
-    // Additional left side triangles
-    {
-      id: "left-paw-5",
-      type: "triangle",
-      points: "0 925.71 0 771.43 154.29 771.43 0 925.71",
-      isSelected: selectedShapes.includes("left-paw-5"),
-      hasImage: "left-paw-5" in shapeImages,
-    },
-    {
-      id: "left-paw-6",
-      type: "triangle",
-      points: "0 771.43 0 617.14 154.29 617.14 0 771.43",
-      isSelected: selectedShapes.includes("left-paw-6"),
-      hasImage: "left-paw-6" in shapeImages,
-    },
-    {
-      id: "left-paw-7",
-      type: "triangle",
-      points: "154.29 462.86 0 462.86 0 308.57 154.29 462.86",
-      isSelected: selectedShapes.includes("left-paw-7"),
-      hasImage: "left-paw-7" in shapeImages,
-    },
-    {
-      id: "left-paw-8",
-      type: "triangle",
-      points: "154.29 308.57 0 308.57 0 154.29 154.29 308.57",
-      isSelected: selectedShapes.includes("left-paw-8"),
-      hasImage: "left-paw-8" in shapeImages,
-    },
-    // Middle horizontal rectangle - left
-    {
-      id: "middle-left-rect",
-      type: "square",
-      x: 0,
-      y: 462.86,
-      width: 462.86,
-      height: 154.29,
-      isSelected: selectedShapes.includes("middle-left-rect"),
-      hasImage: "middle-left-rect" in shapeImages,
-    },
-    // Additional right side triangles
-    {
-      id: "right-paw-5",
-      type: "triangle",
-      points: "1080 154.29 1080 308.57 925.71 308.57 1080 154.29",
-      isSelected: selectedShapes.includes("right-paw-5"),
-      hasImage: "right-paw-5" in shapeImages,
-    },
-    {
-      id: "right-paw-6",
-      type: "triangle",
-      points: "1080 308.57 1080 462.86 925.71 462.86 1080 308.57",
-      isSelected: selectedShapes.includes("right-paw-6"),
-      hasImage: "right-paw-6" in shapeImages,
-    },
-    {
-      id: "right-paw-7",
-      type: "triangle",
-      points: "925.71 617.14 1080 617.14 1080 771.43 925.71 617.14",
-      isSelected: selectedShapes.includes("right-paw-7"),
-      hasImage: "right-paw-7" in shapeImages,
-    },
-    {
-      id: "right-paw-8",
-      type: "triangle",
-      points: "925.71 771.43 1080 771.43 1080 925.71 925.71 771.43",
-      isSelected: selectedShapes.includes("right-paw-8"),
-      hasImage: "right-paw-8" in shapeImages,
-    },
-    // Middle horizontal rectangle - right
-    {
-      id: "middle-right-rect",
-      type: "square",
-      x: 617.14,
-      y: 462.86,
-      width: 462.86,
-      height: 154.29,
-      isSelected: selectedShapes.includes("middle-right-rect"),
-      hasImage: "middle-right-rect" in shapeImages,
-    },
+    { id: "shape1", type: "polygon", points: "271,270 271,0 541,270 271,270" },
+    { id: "shape2", type: "polygon", points: "541,0 541,270 271,0 541,0" },
+    { id: "shape3", type: "polygon", points: "541,0 541,270 811,0 541,0" },
+    { id: "shape4", type: "polygon", points: "541,1080 541,810 811,1080 541,1080" },
+    { id: "shape5", type: "polygon", points: "541,1080 541,810 271,1080 541,1080" },
+    { id: "shape6", type: "polygon", points: "1080,540 811,540 1080,810 1080,540" },
+    { id: "shape7", type: "polygon", points: "1080,540 811,540 1080,270 1080,540" },
+    { id: "shape8", type: "polygon", points: "0,540 271,540 0,810 0,540" },
+    { id: "shape9", type: "polygon", points: "271,270 0,270 271,540 271,270" },
+    { id: "shape10", type: "polygon", points: "811,270 811,0 541,270 811,270" },
+    { id: "shape11", type: "polygon", points: "811,270 1080,270 811,540 811,270" },
+    { id: "shape12", type: "polygon", points: "811,810 1080,810 811,540 811,810" },
+    { id: "shape13", type: "polygon", points: "271,810 0,810 271,540 271,810" },
+    { id: "shape14", type: "polygon", points: "0,540 271,540 0,270 0,540" },
+    { id: "shape15", type: "polygon", points: "811,810 811,1080 541,810 811,810" },
+    { id: "shape16", type: "polygon", points: "271,810 271,1080 541,810 271,810" },
+    { id: "shape17", type: "rect", x: 271, y: 270, width: 540, height: 540 },
+    { id: "shape18", type: "polygon", points: "271,270 0,270 1,0 271,0 271,270" },
+    { id: "shape19", type: "rect", x: 811, y: 0, width: 269, height: 270 },
+    { id: "shape20", type: "rect", x: 811, y: 810, width: 269, height: 270 },
+    { id: "shape21", type: "rect", x: 0, y: 810, width: 271, height: 270 },
   ]
 
   // Handle shape selection
   const handleShapeClick = (id: string) => {
-    if (isDrawingMode) return // Don't select shapes in drawing mode
     console.log(`Shape clicked: ${id}`)
     // Always in multi-select mode, toggle the selection
     setSelectedShapes((prev) => (prev.includes(id) ? prev.filter((shapeId) => shapeId !== id) : [...prev, id]))
@@ -738,7 +339,7 @@ export default function BearPawsPatternRecognition({
             }
             variance = Math.sqrt(variance / pixelCount)
 
-            // Use the existing fabric recognition logic
+            // Determine fabric type based on color analysis
             // Predominantly dark (black/navy)
             if (brightness < 60) {
               if (variance > 70) {
@@ -871,6 +472,10 @@ export default function BearPawsPatternRecognition({
 
               shapesToUpdate.forEach((shapeId) => {
                 newShapeImages[shapeId] = fabricUrl
+                // Add code to call onFabricSelect when a fabric is selected
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
               })
 
               setShapeImages(newShapeImages)
@@ -902,6 +507,9 @@ export default function BearPawsPatternRecognition({
 
               shapesToUpdate.forEach((shapeId) => {
                 newShapeImages[shapeId] = fabricUrl
+                if (onFabricSelect) {
+                  onFabricSelect(shapeId, fabricUrl)
+                }
               })
 
               setShapeImages(newShapeImages)
@@ -918,9 +526,6 @@ export default function BearPawsPatternRecognition({
   // Random fill function
   const randomFill = () => {
     const newShapeImages = { ...shapeImages }
-
-    // Get all shape IDs
-    const allShapeIds = shapes.map((shape) => shape.id)
 
     // Filter to only use high-quality fabric images (not training images)
     const highQualityFabrics = [
@@ -945,10 +550,14 @@ export default function BearPawsPatternRecognition({
     ]
 
     // For each shape, assign a random high-quality fabric
-    allShapeIds.forEach((shapeId) => {
+    shapes.forEach((shape) => {
       const randomIndex = Math.floor(Math.random() * highQualityFabrics.length)
       const randomFabricKey = highQualityFabrics[randomIndex]
-      newShapeImages[shapeId] = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      const fabricUrl = FABRIC_TEXTURES[randomFabricKey as keyof typeof FABRIC_TEXTURES]
+      newShapeImages[shape.id] = fabricUrl
+      if (onFabricSelect) {
+        onFabricSelect(shape.id, fabricUrl)
+      }
     })
 
     setShapeImages(newShapeImages)
@@ -964,72 +573,99 @@ export default function BearPawsPatternRecognition({
     }
   }, [stream])
 
+  // Calculate scale factor for rendering
+  const svgWidth = 1080
+  const svgHeight = 1080
+  const displayWidth = 500
+  const scaleX = displayWidth / svgWidth
+
   return (
-    <div className="flex flex-col md:flex-row items-start gap-8">
-      {/* Left side: Pattern grid */}
-      <div className="overflow-hidden">
-        <svg ref={svgRef} width={520} height={520} viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
-          {/* Define clip paths for each shape */}
-          <defs>
-            {shapes.map((shape) => (
-              <clipPath key={`clip-${shape.id}`} id={`clip-${shape.id}`}>
-                {shape.type === "triangle" ? (
-                  <polygon points={shape.points} />
-                ) : (
-                  <rect x={shape.x} y={shape.y} width={shape.width} height={shape.height} />
-                )}
-              </clipPath>
-            ))}
-          </defs>
+    <div className="flex flex-col md:flex-row gap-8">
+      <div
+        className="border border-gray-300 rounded-lg overflow-hidden relative bg-white"
+        style={{ width: "500px", height: "500px", backgroundColor: "white" }}
+      >
+        <svg
+          ref={svgRef}
+          width={displayWidth}
+          height={displayWidth}
+          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{
+            ...style,
+            pointerEvents: isDrawingMode ? "none" : "auto",
+            backgroundColor: "white",
+          }}
+          fill="white"
+        >
+          {/* White background */}
+          <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" style={{ zIndex: -1 }} />
 
-          {/* Shapes */}
-          {shapes.map((shape) => (
-            <g key={shape.id}>
-              {/* If this shape has an image, show it clipped to the shape */}
-              {shape.hasImage && (
-                <image
-                  href={shapeImages[shape.id]}
-                  width={svgSize * 2.16}
-                  height={svgSize * 2.16}
-                  preserveAspectRatio="xMidYMid slice"
-                  clipPath={`url(#clip-${shape.id})`}
-                />
-              )}
-
-              {/* Shape outline and click area */}
-              {shape.type === "triangle" ? (
+          {/* Render all shapes from the SVG */}
+          {shapes.map((shape) => {
+            if (shape.type === "polygon") {
+              return (
                 <polygon
+                  key={shape.id}
                   points={shape.points}
-                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
+                  fill={shapeImages[shape.id] ? `url(#pattern-${shape.id})` : "white"}
+                  stroke="black"
+                  strokeWidth="2"
                   onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
+                  className={`cursor-pointer ${
+                    selectedShapes.includes(shape.id) ? "stroke-gray-800" : "hover:stroke-gray-400"
+                  }`}
+                  style={{ fillOpacity: selectedShapes.includes(shape.id) ? 0.8 : 1 }}
                 />
-              ) : (
+              )
+            } else if (shape.type === "rect") {
+              return (
                 <rect
+                  key={shape.id}
                   x={shape.x}
                   y={shape.y}
                   width={shape.width}
                   height={shape.height}
-                  fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
-                  strokeDasharray="none"
+                  fill={shapeImages[shape.id] ? `url(#pattern-${shape.id})` : "white"}
+                  stroke="black"
+                  strokeWidth="2"
                   onClick={() => handleShapeClick(shape.id)}
-                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
-                  style={{ fillOpacity: shape.isSelected ? (shape.hasImage ? 0.5 : 0.2) : 0 }}
+                  className={`cursor-pointer ${
+                    selectedShapes.includes(shape.id) ? "stroke-gray-800" : "hover:stroke-gray-400"
+                  }`}
+                  style={{ fillOpacity: selectedShapes.includes(shape.id) ? 0.8 : 1 }}
                 />
-              )}
-            </g>
-          ))}
+              )
+            }
+            return null
+          })}
+
+          {/* Define patterns for each shape */}
+          <defs>
+            {Object.entries(shapeImages).map(([shapeId, imageUrl]) => (
+              <pattern
+                key={`pattern-${shapeId}`}
+                id={`pattern-${shapeId}`}
+                patternUnits="userSpaceOnUse"
+                width={svgWidth}
+                height={svgHeight}
+                patternTransform="scale(1)"
+              >
+                <image
+                  href={imageUrl}
+                  x="0"
+                  y="0"
+                  width={svgWidth}
+                  height={svgHeight}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+              </pattern>
+            ))}
+          </defs>
         </svg>
       </div>
 
-      {/* Right side: Controls and info */}
-      <div className="flex flex-col gap-6 w-80">
+      <div className="flex flex-col gap-6">
         {/* Selection info */}
         <div className="text-sm text-gray-500">
           {selectedShapes.length === 0
@@ -1038,14 +674,14 @@ export default function BearPawsPatternRecognition({
         </div>
 
         {isModelLoading && (
-          <Alert className="w-full">
+          <Alert className="max-w-md">
             <AlertTitle>Loading Fabric Recognition Model</AlertTitle>
             <AlertDescription>Please wait while the AI model is being loaded...</AlertDescription>
           </Alert>
         )}
 
         {modelError && (
-          <Alert className="w-full" variant="destructive">
+          <Alert className="max-w-md" variant="destructive">
             <AlertTitle>Model Loading Error</AlertTitle>
             <AlertDescription>{modelError}</AlertDescription>
           </Alert>
@@ -1053,7 +689,7 @@ export default function BearPawsPatternRecognition({
 
         {/* Fabric recognition result */}
         {recognitionMessage && (
-          <Alert className="w-full">
+          <Alert className="max-w-md">
             <Scan className="h-4 w-4" />
             <AlertTitle>Fabric Recognition</AlertTitle>
             <AlertDescription>{recognitionMessage}</AlertDescription>
@@ -1061,11 +697,11 @@ export default function BearPawsPatternRecognition({
         )}
 
         {/* Camera and image controls */}
-        <div className="flex flex-row gap-3">
+        <div className="flex gap-4 flex-wrap justify-center">
           {!showCamera ? (
             <>
               <div
-                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
                 onClick={startCamera}
               >
                 <div className="bg-gray-200 rounded-full p-2 mr-3">
@@ -1075,7 +711,7 @@ export default function BearPawsPatternRecognition({
               </div>
 
               <div
-                className="bg-white text-black border border-black rounded-full flex items-center pr-6 pl-2 py-2 hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
                 onClick={randomFill}
               >
                 <div className="bg-gray-200 rounded-full p-2 mr-3">
@@ -1085,9 +721,9 @@ export default function BearPawsPatternRecognition({
               </div>
             </>
           ) : (
-            <div className="flex flex-col gap-3 w-full">
+            <>
               <div
-                className="w-full bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
                 onClick={recognizeFabric}
                 style={{ opacity: isRecognizing ? 0.7 : 1 }}
               >
@@ -1100,7 +736,7 @@ export default function BearPawsPatternRecognition({
               </div>
 
               <div
-                className="w-full bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer whitespace-nowrap"
+                className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity cursor-pointer"
                 onClick={stopCamera}
               >
                 <div className="bg-gray-200 rounded-full p-2 mr-3">
@@ -1119,28 +755,16 @@ export default function BearPawsPatternRecognition({
                 </div>
                 <span className="text-lg font-serif font-bold">Cancel</span>
               </div>
-            </div>
+            </>
           )}
         </div>
 
-        {/* Video and canvas elements */}
-        {showCamera && (
-          <div className="mt-4 rounded-lg overflow-hidden bg-gray-900" style={{ width: "100%" }}>
-            <div className="p-2 bg-black text-white text-xs">Camera Preview</div>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-[240px] object-contain bg-black"
-              style={{ display: "block" }}
-              onCanPlay={() => console.log("Video can play now")}
-            />
-            <div className="p-2 bg-black text-white text-xs text-center">
-              If camera is black, check browser permissions
-            </div>
+        {/* Hidden video and canvas elements */}
+        <div className={showCamera ? "block" : "hidden"}>
+          <div className="relative border rounded-lg overflow-hidden">
+            <video ref={videoRef} autoPlay playsInline muted className="w-[320px] h-[240px] object-cover" />
           </div>
-        )}
+        </div>
         <canvas ref={recognitionCanvasRef} className="hidden" />
       </div>
     </div>

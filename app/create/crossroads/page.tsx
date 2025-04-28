@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from "@/utils/pattern-constants"
 import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
+import { downloadPattern } from "@/utils/svg-capture"
 
 export default function CreateCrossroadsPage() {
   const [fabricSelections, setFabricSelections] = useState({})
@@ -34,125 +35,23 @@ export default function CreateCrossroadsPage() {
     }))
   }
 
-  // Function to download the pattern as an image
-  const handleDownloadImage = () => {
-    const canvas = document.createElement("canvas")
-    canvas.width = 600
-    canvas.height = 600
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) return
-
-    // Draw the Crossroads pattern with fabric selections if available
-    if (Object.keys(selectedFabrics).length > 0) {
-      // Draw with selected fabrics
-      const size = 600
-      const blockSize = size / 3
-
-      // Draw background
-      ctx.fillStyle = selectedFabrics.background ? `url(${selectedFabrics.background})` : "#FFFFFF"
-      ctx.fillRect(0, 0, size, size)
-
-      // Draw center square
-      ctx.fillStyle = selectedFabrics.centerSquare ? `url(${selectedFabrics.centerSquare})` : "#BBBBBB"
-      ctx.fillRect(blockSize, blockSize, blockSize, blockSize)
-
-      // Draw rectangles
-      ctx.fillStyle = selectedFabrics.rectangles ? `url(${selectedFabrics.rectangles})` : "#EEEEEE"
-
-      // Top rectangle
-      ctx.fillRect(blockSize, 0, blockSize, blockSize)
-
-      // Right rectangle
-      ctx.fillRect(2 * blockSize, blockSize, blockSize, blockSize)
-
-      // Bottom rectangle
-      ctx.fillRect(blockSize, 2 * blockSize, blockSize, blockSize)
-
-      // Left rectangle
-      ctx.fillRect(0, blockSize, blockSize, blockSize)
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      const gridSize = blockSize / 4
-      for (let i = 0; i <= 12; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * gridSize, 0)
-        ctx.lineTo(i * gridSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * gridSize)
-        ctx.lineTo(size, i * gridSize)
-        ctx.stroke()
-      }
-    } else {
-      // Draw with default colors
-      const size = 600
-      const blockSize = size / 3
-
-      // Draw background
-      ctx.fillStyle = "#FFFFFF"
-      ctx.fillRect(0, 0, size, size)
-
-      // Draw center square
-      ctx.fillStyle = "#BBBBBB"
-      ctx.fillRect(blockSize, blockSize, blockSize, blockSize)
-
-      // Draw rectangles
-      ctx.fillStyle = "#EEEEEE"
-
-      // Top rectangle
-      ctx.fillRect(blockSize, 0, blockSize, blockSize)
-
-      // Right rectangle
-      ctx.fillRect(2 * blockSize, blockSize, blockSize, blockSize)
-
-      // Bottom rectangle
-      ctx.fillRect(blockSize, 2 * blockSize, blockSize, blockSize)
-
-      // Left rectangle
-      ctx.fillRect(0, blockSize, blockSize, blockSize)
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      const gridSize = blockSize / 4
-      for (let i = 0; i <= 12; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * gridSize, 0)
-        ctx.lineTo(i * gridSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * gridSize)
-        ctx.lineTo(size, i * gridSize)
-        ctx.stroke()
-      }
-    }
-
-    // Create download link
-    const dataUrl = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
-    link.download = "crossroads-quilt-pattern.png"
-    link.href = dataUrl
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
   // Handle mode change
   const handleModeChange = (isDrawingMode: boolean) => {
     setMode(isDrawingMode ? "draw" : "select")
+  }
+
+  // Function to download the pattern as an image
+  const handleDownloadImage = async () => {
+    // Save fabric selections first
+    saveFabricSelections()
+
+    if (!svgRef.current) {
+      alert("Could not find the pattern to download. Please try again.")
+      return
+    }
+
+    // Download the pattern
+    await downloadPattern(svgRef.current, "crossroads-quilt-pattern.png")
   }
 
   return (

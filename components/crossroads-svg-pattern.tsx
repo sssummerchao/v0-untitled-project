@@ -802,6 +802,8 @@ export default function CrossroadsSvgPattern({
       <div className="flex justify-center">
         {/* SVG Pattern on the left - removed extra container div */}
         <svg ref={svgRef} width="500" height="500" viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
+          {/* White background */}
+          <rect x="0" y="0" width="1080" height="1080" fill="white" />
           {/* Define clip paths for each shape */}
           <defs>
             {/* Center square */}
@@ -882,8 +884,8 @@ export default function CrossroadsSvgPattern({
                     points={shape.points}
                     fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
                     fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
-                    stroke="#C7C7C7"
-                    strokeWidth="4"
+                    stroke="#000000"
+                    strokeWidth="2"
                     className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
                 ) : (
@@ -895,8 +897,8 @@ export default function CrossroadsSvgPattern({
                     transform={shape.transform}
                     fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
                     fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
-                    stroke="#C7C7C7"
-                    strokeWidth="4"
+                    stroke="#000000"
+                    strokeWidth="2"
                     className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
                 )}

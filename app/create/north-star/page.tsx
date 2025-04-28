@@ -1,12 +1,13 @@
 "use client"
 
-import FabricRecognition from "@/components/fabric-recognition"
 import Link from "next/link"
 import Image from "next/image"
 import { STORAGE_KEYS } from "@/utils/pattern-constants"
 import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
+import NorthStarSVGPattern from "@/components/north-star-svg-pattern"
+import { downloadPattern } from "@/utils/svg-capture"
 
 export default function CreateNorthStarPage() {
   const [fabricSelections, setFabricSelections] = useState({})
@@ -28,241 +29,22 @@ export default function CreateNorthStarPage() {
     }))
   }
 
-  // Function to download the pattern as an image
-  const handleDownloadImage = () => {
-    const canvas = document.createElement("canvas")
-    canvas.width = 600
-    canvas.height = 600
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) return
-
-    // Draw the North Star pattern with fabric selections if available
-    if (Object.keys(fabricSelections).length > 0) {
-      // Draw with selected fabrics
-      const size = 600
-      const centerSize = size / 3
-      const offset = (size - centerSize) / 2
-
-      // Draw outer squares
-      ctx.fillStyle = fabricSelections.outerSquares ? `url(${fabricSelections.outerSquares})` : "white" //DEFAULT_COLORS.NORTH_STAR.outerSquares;
-      ctx.fillRect(0, 0, offset, offset) // Top left
-      ctx.fillRect(size - offset, 0, offset, offset) // Top right
-      ctx.fillRect(0, size - offset, offset, offset) // Bottom left
-      ctx.fillRect(size - offset, size - offset, offset, offset) // Bottom right
-
-      // Draw triangles
-      ctx.fillStyle = fabricSelections.triangles ? `url(${fabricSelections.triangles})` : "white" //DEFAULT_COLORS.NORTH_STAR.triangles;
-
-      // Top triangles
-      ctx.beginPath()
-      ctx.moveTo(offset, 0)
-      ctx.lineTo(offset + centerSize, 0)
-      ctx.lineTo(offset + centerSize / 2, offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Right triangles
-      ctx.beginPath()
-      ctx.moveTo(size, offset)
-      ctx.lineTo(size, offset + centerSize)
-      ctx.lineTo(size - offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom triangles
-      ctx.beginPath()
-      ctx.moveTo(offset, size)
-      ctx.lineTo(offset + centerSize, size)
-      ctx.lineTo(offset + centerSize / 2, size - offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Left triangles
-      ctx.beginPath()
-      ctx.moveTo(0, offset)
-      ctx.lineTo(0, offset + centerSize)
-      ctx.lineTo(offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Draw diagonal triangles
-      ctx.fillStyle = fabricSelections.diagonalTriangles ? `url(${fabricSelections.diagonalTriangles})` : "white" //DEFAULT_COLORS.NORTH_STAR.diagonalTriangles;
-
-      // Top left to center
-      ctx.beginPath()
-      ctx.moveTo(offset, offset)
-      ctx.lineTo(offset + centerSize / 2, offset)
-      ctx.lineTo(offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Top right to center
-      ctx.beginPath()
-      ctx.moveTo(size - offset, offset)
-      ctx.lineTo(size - offset, offset + centerSize / 2)
-      ctx.lineTo(size - offset - centerSize / 2, offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom right to center
-      ctx.beginPath()
-      ctx.moveTo(size - offset, size - offset)
-      ctx.lineTo(size - offset - centerSize / 2, size - offset)
-      ctx.lineTo(size - offset, size - offset - centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom left to center
-      ctx.beginPath()
-      ctx.moveTo(offset, size - offset)
-      ctx.lineTo(offset, size - offset - centerSize / 2)
-      ctx.lineTo(offset + centerSize / 2, size - offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Draw center square
-      ctx.fillStyle = fabricSelections.centerSquare ? `url(${fabricSelections.centerSquare})` : "white" //DEFAULT_COLORS.NORTH_STAR.centerSquare;
-      ctx.fillRect(offset, offset, centerSize, centerSize)
-
-      // Draw grid lines on center square
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      const gridSize = centerSize / 8
-      for (let i = 0; i <= 8; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(offset + i * gridSize, offset)
-        ctx.lineTo(offset + i * gridSize, offset + centerSize)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(offset, offset + i * gridSize)
-        ctx.lineTo(offset + centerSize, offset + i * gridSize)
-        ctx.stroke()
-      }
-    } else {
-      // Draw with default colors
-      const size = 600
-      const centerSize = size / 3
-      const offset = (size - centerSize) / 2
-
-      // Draw outer squares
-      ctx.fillStyle = "white" //DEFAULT_COLORS.NORTH_STAR.outerSquares;
-      ctx.fillRect(0, 0, offset, offset) // Top left
-      ctx.fillRect(size - offset, 0, offset, offset) // Top right
-      ctx.fillRect(0, size - offset, offset, offset) // Bottom left
-      ctx.fillRect(size - offset, size - offset, offset, offset) // Bottom right
-
-      // Draw triangles
-      ctx.fillStyle = "white" //DEFAULT_COLORS.NORTH_STAR.triangles;
-
-      // Top triangles
-      ctx.beginPath()
-      ctx.moveTo(offset, 0)
-      ctx.lineTo(offset + centerSize, 0)
-      ctx.lineTo(offset + centerSize / 2, offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Right triangles
-      ctx.beginPath()
-      ctx.moveTo(size, offset)
-      ctx.lineTo(size, offset + centerSize)
-      ctx.lineTo(size - offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom triangles
-      ctx.beginPath()
-      ctx.moveTo(offset, size)
-      ctx.lineTo(offset + centerSize, size)
-      ctx.lineTo(offset + centerSize / 2, size - offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Left triangles
-      ctx.beginPath()
-      ctx.moveTo(0, offset)
-      ctx.lineTo(0, offset + centerSize)
-      ctx.lineTo(offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Draw diagonal triangles
-      ctx.fillStyle = "white" //DEFAULT_COLORS.NORTH_STAR.diagonalTriangles;
-
-      // Top left to center
-      ctx.beginPath()
-      ctx.moveTo(offset, offset)
-      ctx.lineTo(offset + centerSize / 2, offset)
-      ctx.lineTo(offset, offset + centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Top right to center
-      ctx.beginPath()
-      ctx.moveTo(size - offset, offset)
-      ctx.lineTo(size - offset, offset + centerSize / 2)
-      ctx.lineTo(size - offset - centerSize / 2, offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom right to center
-      ctx.beginPath()
-      ctx.moveTo(size - offset, size - offset)
-      ctx.lineTo(size - offset - centerSize / 2, size - offset)
-      ctx.lineTo(size - offset, size - offset - centerSize / 2)
-      ctx.closePath()
-      ctx.fill()
-
-      // Bottom left to center
-      ctx.beginPath()
-      ctx.moveTo(offset, size - offset)
-      ctx.lineTo(offset, size - offset - centerSize / 2)
-      ctx.lineTo(offset + centerSize / 2, size - offset)
-      ctx.closePath()
-      ctx.fill()
-
-      // Draw center square
-      ctx.fillStyle = "white" //DEFAULT_COLORS.NORTH_STAR.centerSquare;
-      ctx.fillRect(offset, offset, centerSize, centerSize)
-
-      // Draw grid lines on center square
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      const gridSize = centerSize / 8
-      for (let i = 0; i <= 8; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(offset + i * gridSize, offset)
-        ctx.lineTo(offset + i * gridSize, offset + centerSize)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(offset, offset + i * gridSize)
-        ctx.lineTo(offset + centerSize, offset + i * gridSize)
-        ctx.stroke()
-      }
-    }
-
-    // Create download link
-    const dataUrl = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
-    link.download = "north-star-quilt-pattern.png"
-    link.href = dataUrl
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  // Handle mode change
   const handleModeChange = (isDrawingMode: boolean) => {
     setMode(isDrawingMode ? "draw" : "select")
+  }
+
+  // Function to download the pattern as an image
+  const handleDownloadImage = async () => {
+    // Save fabric selections first
+    saveFabricSelections()
+
+    if (!svgRef.current) {
+      alert("Could not find the pattern to download. Please try again.")
+      return
+    }
+
+    // Download the pattern
+    await downloadPattern(svgRef.current, "north-star-quilt-pattern.png")
   }
 
   return (
@@ -294,10 +76,20 @@ export default function CreateNorthStarPage() {
           </p>
 
           <div className="relative">
-            <FabricRecognition onFabricSelect={handleFabricSelect} svgRef={svgRef} isDrawingMode={mode === "draw"} />
+            <NorthStarSVGPattern
+              onFabricSelect={handleFabricSelect}
+              svgRef={svgRef}
+              isDrawingMode={mode === "draw"}
+              style={{ width: "100%", height: "auto" }}
+            />
 
             {/* Free drawing canvas (only active in drawing mode) */}
-            <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 500 500" isActive={mode === "draw"} />
+            <FreeDrawingCanvas
+              svgRef={svgRef}
+              viewBox="0 0 1080 1080"
+              isActive={mode === "draw"}
+              defaultStrokeWidth="2"
+            />
           </div>
 
           {/* Drawing mode selector */}

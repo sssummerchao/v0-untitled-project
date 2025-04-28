@@ -7,6 +7,7 @@ import { STORAGE_KEYS } from "@/utils/pattern-constants"
 import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
+import { downloadPattern } from "@/utils/svg-capture"
 
 const DEFAULT_COLORS = {
   LOG_CABIN: {
@@ -37,139 +38,17 @@ export default function CreateLogCabinPage() {
   }
 
   // Function to download the pattern as an image
-  const handleDownloadImage = () => {
-    const canvas = document.createElement("canvas")
-    canvas.width = 600
-    canvas.height = 600
-    const ctx = canvas.getContext("2d")
+  const handleDownloadImage = async () => {
+    // Save fabric selections first
+    saveFabricSelections()
 
-    if (!ctx) return
-
-    // Draw the Log Cabin pattern with fabric selections if available
-    if (Object.keys(fabricSelections).length > 0) {
-      // Draw with selected fabrics
-      const size = 600
-      const center = size / 2
-      const blockSize = size / 10
-
-      // Draw center square
-      ctx.fillStyle = fabricSelections.center ? `url(${fabricSelections.center})` : DEFAULT_COLORS.LOG_CABIN.center
-      ctx.fillRect(center - blockSize, center - blockSize, blockSize * 2, blockSize * 2)
-
-      // Draw log strips
-      const drawLogStrip = (round: number, color: string) => {
-        const offset = blockSize * (round + 1)
-        const length = blockSize * (round + 1) * 2
-
-        ctx.fillStyle = color
-
-        // Top strip
-        ctx.fillRect(center - offset, center - offset, length, blockSize)
-
-        // Right strip
-        ctx.fillRect(center + offset - blockSize, center - offset, blockSize, length)
-
-        // Bottom strip
-        ctx.fillRect(center - offset, center + offset - blockSize, length, blockSize)
-
-        // Left strip
-        ctx.fillRect(center - offset, center - offset, blockSize, length - blockSize)
-      }
-
-      // Draw log strips with alternating colors
-      for (let i = 1; i <= 4; i++) {
-        const color =
-          i % 2 === 1
-            ? fabricSelections.lightLogs
-              ? `url(${fabricSelections.lightLogs})`
-              : DEFAULT_COLORS.LOG_CABIN.lightLogs
-            : fabricSelections.darkLogs
-              ? `url(${fabricSelections.darkLogs})`
-              : DEFAULT_COLORS.LOG_CABIN.darkLogs
-        drawLogStrip(i, color)
-      }
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      for (let i = 0; i <= 10; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * blockSize, 0)
-        ctx.lineTo(i * blockSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * blockSize)
-        ctx.lineTo(size, i * blockSize)
-        ctx.stroke()
-      }
-    } else {
-      // Draw with default colors
-      const size = 600
-      const center = size / 2
-      const blockSize = size / 10
-
-      // Draw center square
-      ctx.fillStyle = DEFAULT_COLORS.LOG_CABIN.center
-      ctx.fillRect(center - blockSize, center - blockSize, blockSize * 2, blockSize * 2)
-
-      // Draw log strips
-      const drawLogStrip = (round: number, color: string) => {
-        const offset = blockSize * (round + 1)
-        const length = blockSize * (round + 1) * 2
-
-        ctx.fillStyle = color
-
-        // Top strip
-        ctx.fillRect(center - offset, center - offset, length, blockSize)
-
-        // Right strip
-        ctx.fillRect(center + offset - blockSize, center - offset, blockSize, length)
-
-        // Bottom strip
-        ctx.fillRect(center - offset, center + offset - blockSize, length, blockSize)
-
-        // Left strip
-        ctx.fillRect(center - offset, center - offset, blockSize, length - blockSize)
-      }
-
-      // Draw log strips with alternating colors
-      for (let i = 1; i <= 4; i++) {
-        drawLogStrip(i, i % 2 === 1 ? DEFAULT_COLORS.LOG_CABIN.lightLogs : DEFAULT_COLORS.LOG_CABIN.darkLogs)
-      }
-
-      // Draw grid lines
-      ctx.strokeStyle = "#AAAAAA"
-      ctx.lineWidth = 0.5
-
-      // Draw grid on the entire canvas
-      for (let i = 0; i <= 10; i++) {
-        // Vertical lines
-        ctx.beginPath()
-        ctx.moveTo(i * blockSize, 0)
-        ctx.lineTo(i * blockSize, size)
-        ctx.stroke()
-
-        // Horizontal lines
-        ctx.beginPath()
-        ctx.moveTo(0, i * blockSize)
-        ctx.lineTo(size, i * blockSize)
-        ctx.stroke()
-      }
+    if (!svgRef.current) {
+      alert("Could not find the pattern to download. Please try again.")
+      return
     }
 
-    // Create download link
-    const dataUrl = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
-    link.download = "log-cabin-quilt-pattern.png"
-    link.href = dataUrl
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    // Download the pattern
+    await downloadPattern(svgRef.current, "log-cabin-quilt-pattern.png")
   }
 
   // Handle mode change
@@ -206,9 +85,22 @@ export default function CreateLogCabinPage() {
           </p>
 
           <div className="flex flex-col md:flex-row gap-8 items-start justify-center">
-            <div className="relative" style={{ width: "500px", height: "500px" }}>
+            <div className="relative">
               <LogCabinSVGPattern onFabricSelect={handleFabricSelect} svgRef={svgRef} isDrawingMode={mode === "draw"} />
-              <FreeDrawingCanvas svgRef={svgRef} viewBox="0 0 1080 1080" isActive={mode === "draw"} />
+              <FreeDrawingCanvas
+                svgRef={svgRef}
+                viewBox="0 0 1080 1080"
+                isActive={mode === "draw"}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: mode === "draw" ? "auto" : "none",
+                  zIndex: mode === "draw" ? 10 : -1,
+                }}
+              />
             </div>
           </div>
 
