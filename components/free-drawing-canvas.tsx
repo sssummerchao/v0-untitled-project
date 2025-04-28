@@ -50,6 +50,9 @@ export default function FreeDrawingCanvas({
   const [drawingGroupId] = useState(`drawing-group-${Math.random().toString(36).substring(2, 9)}`)
   const [defaultPositionSet, setDefaultPositionSet] = useState(false)
 
+  // Define stroke width as a state variable so it can be used consistently
+  const [strokeWidth, setStrokeWidth] = useState<string>("3")
+
   // State for draggable menu
   const [menuPosition, setMenuPosition] = useState({ x: 180, y: 0 }) // Y will be calculated on mount
   const [isDragging, setIsDragging] = useState(false)
@@ -151,7 +154,7 @@ export default function FreeDrawingCanvas({
         pathElement.setAttribute("d", path)
         pathElement.setAttribute("fill", "none")
         pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
+        pathElement.setAttribute("stroke-width", strokeWidth)
         pathElement.setAttribute("stroke-linecap", "round")
         drawingGroup.appendChild(pathElement)
       } else if (stitchType === "chain") {
@@ -160,7 +163,7 @@ export default function FreeDrawingCanvas({
         pathElement.setAttribute("d", path)
         pathElement.setAttribute("fill", "none")
         pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
+        pathElement.setAttribute("stroke-width", strokeWidth)
         pathElement.setAttribute("stroke-dasharray", "5 5")
         pathElement.setAttribute("stroke-linecap", "round")
         drawingGroup.appendChild(pathElement)
@@ -197,7 +200,7 @@ export default function FreeDrawingCanvas({
             segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${endX} ${endY}`)
             segmentPath.setAttribute("fill", "none")
             segmentPath.setAttribute("stroke", isMainSegment ? colorCombo.main : colorCombo.accent)
-            segmentPath.setAttribute("stroke-width", "3")
+            segmentPath.setAttribute("stroke-width", strokeWidth)
             segmentPath.setAttribute("stroke-linecap", "butt")
             drawingGroup.appendChild(segmentPath)
 
@@ -211,7 +214,7 @@ export default function FreeDrawingCanvas({
             segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${nextPoint.x} ${nextPoint.y}`)
             segmentPath.setAttribute("fill", "none")
             segmentPath.setAttribute("stroke", isMainSegment ? colorCombo.main : colorCombo.accent)
-            segmentPath.setAttribute("stroke-width", "3")
+            segmentPath.setAttribute("stroke-width", strokeWidth)
             segmentPath.setAttribute("stroke-linecap", "butt")
             drawingGroup.appendChild(segmentPath)
 
@@ -228,7 +231,7 @@ export default function FreeDrawingCanvas({
         }
       }
     })
-  }, [paths, svgRef, drawingGroupId])
+  }, [paths, svgRef, drawingGroupId, strokeWidth])
 
   // Helper function to extract points from a path string
   const extractPointsFromPath = (pathString: string): { x: number; y: number }[] => {
@@ -428,9 +431,35 @@ export default function FreeDrawingCanvas({
   }, [strokeColor])
 
   // Draggable menu handlers
+  // Add a function to disable page scrolling during drag operations
+  const disablePageScroll = () => {
+    document.body.style.overflow = "hidden"
+    document.documentElement.style.overflow = "hidden"
+    document.body.style.position = "fixed"
+    document.body.style.width = "100%"
+    document.body.style.top = `-${window.scrollY}px`
+    document.body.dataset.scrollY = window.scrollY.toString()
+  }
+
+  // Add a function to re-enable page scrolling after drag operations
+  const enablePageScroll = () => {
+    document.body.style.overflow = ""
+    document.documentElement.style.overflow = ""
+    document.body.style.position = ""
+    document.body.style.width = ""
+    const scrollY = document.body.dataset.scrollY || "0"
+    window.scrollTo(0, Number.parseInt(scrollY))
+    document.body.style.top = ""
+    delete document.body.dataset.scrollY
+  }
+
+  // Update the handleDragStart function to disable scrolling
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    // Disable page scrolling
+    disablePageScroll()
 
     let clientX, clientY
     if ("touches" in e) {
@@ -453,9 +482,20 @@ export default function FreeDrawingCanvas({
     setIsDragging(true)
   }
 
+  // Update the handleDragEnd function to re-enable scrolling
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    setHasBeenDragged(true)
+
+    // Re-enable page scrolling
+    enablePageScroll()
+  }
+
+  // Update the handleDragMove function to prevent default behavior
   const handleDragMove = (e: MouseEvent | TouchEvent) => {
     if (!isDragging) return
     e.preventDefault()
+    e.stopPropagation()
 
     let clientX, clientY
     if ("touches" in e) {
@@ -473,16 +513,11 @@ export default function FreeDrawingCanvas({
     setMenuPosition({ x: newX, y: newY })
   }
 
-  const handleDragEnd = () => {
-    setIsDragging(false)
-    setHasBeenDragged(true)
-  }
-
   // Add and remove event listeners for dragging
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleDragMove)
-      window.addEventListener("touchmove", handleDragMove)
+      window.addEventListener("mousemove", handleDragMove, { passive: false })
+      window.addEventListener("touchmove", handleDragMove, { passive: false })
       window.addEventListener("mouseup", handleDragEnd)
       window.addEventListener("touchend", handleDragEnd)
     } else {
@@ -490,6 +525,11 @@ export default function FreeDrawingCanvas({
       window.removeEventListener("touchmove", handleDragMove)
       window.removeEventListener("mouseup", handleDragEnd)
       window.removeEventListener("touchend", handleDragEnd)
+
+      // Ensure scrolling is re-enabled if component unmounts while dragging
+      if (document.body.style.overflow === "hidden") {
+        enablePageScroll()
+      }
     }
 
     return () => {
@@ -497,6 +537,11 @@ export default function FreeDrawingCanvas({
       window.removeEventListener("touchmove", handleDragMove)
       window.removeEventListener("mouseup", handleDragEnd)
       window.removeEventListener("touchend", handleDragEnd)
+
+      // Ensure scrolling is re-enabled when component unmounts
+      if (document.body.style.overflow === "hidden") {
+        enablePageScroll()
+      }
     }
   }, [isDragging])
 
@@ -590,6 +635,22 @@ export default function FreeDrawingCanvas({
             </div>
           </div>
 
+          {/* Stroke Width Control */}
+          <div className="mb-4">
+            <h3 className="text-xl font-normal mb-2 text-center">Width:</h3>
+            <div className="flex flex-col items-center">
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={strokeWidth}
+                onChange={(e) => setStrokeWidth(e.target.value)}
+                className="w-full mb-1"
+              />
+              <span className="text-sm">{strokeWidth}px</span>
+            </div>
+          </div>
+
           {/* Undo/Redo buttons */}
           <div className="flex justify-between">
             <button
@@ -647,14 +708,20 @@ export default function FreeDrawingCanvas({
           {isDrawing && currentPath && (
             <>
               {stitchType === "running" && (
-                <path d={currentPath} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+                <path
+                  d={currentPath}
+                  fill="none"
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                />
               )}
               {stitchType === "chain" && (
                 <path
                   d={currentPath}
                   fill="none"
                   stroke={strokeColor}
-                  strokeWidth="3"
+                  strokeWidth={strokeWidth}
                   strokeDasharray="5 5"
                   strokeLinecap="round"
                 />
@@ -720,7 +787,7 @@ export default function FreeDrawingCanvas({
                         d={segment.path}
                         fill="none"
                         stroke={segment.isMain ? colorCombo.main : colorCombo.accent}
-                        strokeWidth="3"
+                        strokeWidth={strokeWidth}
                         strokeLinecap="butt"
                       />
                     ))
@@ -734,14 +801,14 @@ export default function FreeDrawingCanvas({
           {paths.map((path, index) => (
             <React.Fragment key={index}>
               {path.stitchType === "running" && (
-                <path d={path.path} fill="none" stroke={path.stroke} strokeWidth="3" strokeLinecap="round" />
+                <path d={path.path} fill="none" stroke={path.stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
               )}
               {path.stitchType === "chain" && (
                 <path
                   d={path.path}
                   fill="none"
                   stroke={path.stroke}
-                  strokeWidth="3"
+                  strokeWidth={strokeWidth}
                   strokeDasharray="5 5"
                   strokeLinecap="round"
                 />
@@ -811,7 +878,7 @@ export default function FreeDrawingCanvas({
                         d={segment.path}
                         fill="none"
                         stroke={segment.isMain ? colorCombo.main : colorCombo.accent}
-                        strokeWidth="3"
+                        strokeWidth={strokeWidth}
                         strokeLinecap="butt"
                       />
                     ))

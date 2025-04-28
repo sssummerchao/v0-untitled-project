@@ -19,7 +19,7 @@ export default function ShapeDrawing({ selectedShape, svgRef, viewBox, onClose }
   const [paths, setPaths] = useState<string[]>([])
   const [redoPaths, setRedoPaths] = useState<string[]>([])
   const [strokeColor, setStrokeColor] = useState("#000000")
-  const [strokeWidth, setStrokeWidth] = useState(2)
+  const [strokeWidth, setStrokeWidth] = useState(3)
   const [strokeDasharray, setStrokeDasharray] = useState("")
   const canvasRef = useRef<SVGSVGElement>(null)
   const shapeRef = useRef<SVGElement | null>(null)
@@ -218,12 +218,26 @@ export default function ShapeDrawing({ selectedShape, svgRef, viewBox, onClose }
                         x2="90%"
                         y2="50%"
                         stroke="black"
-                        strokeWidth="2"
+                        strokeWidth="3"
                         strokeDasharray={pattern || "none"}
                       />
                     </svg>
                   </button>
                 ))}
+              </div>
+
+              {/* Stroke Width Control */}
+              <h3 className="mb-2 text-center font-bold">Width:</h3>
+              <div className="mb-4">
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={strokeWidth}
+                  onChange={(e) => setStrokeWidth(Number.parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="mt-1 text-center">{strokeWidth}px</div>
               </div>
             </div>
 

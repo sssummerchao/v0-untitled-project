@@ -31,10 +31,15 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
   const [isDrawing, setIsDrawing] = useState(false)
   const [showDrawingPanel, setShowDrawingPanel] = useState(false)
   const [currentPath, setCurrentPath] = useState<string>("")
-  const [paths, setPaths] = useState<{ path: string; stroke: string; stitchType: StitchType }[]>([])
-  const [undoStack, setUndoStack] = useState<{ path: string; stroke: string; stitchType: StitchType }[]>([])
+  const [paths, setPaths] = useState<{ path: string; stroke: string; stitchType: StitchType; strokeWidth: string }[]>(
+    [],
+  )
+  const [undoStack, setUndoStack] = useState<
+    { path: string; stroke: string; stitchType: StitchType; strokeWidth: string }[]
+  >([])
   const [stitchType, setStitchType] = useState<StitchType>("running")
   const [strokeColor, setStrokeColor] = useState<string>("#251e1d")
+  const [strokeWidth, setStrokeWidth] = useState<string>("3")
   const [selectedCrossStitchIndex, setSelectedCrossStitchIndex] = useState(0)
   const canvasRef = useRef<HTMLDivElement>(null)
   const drawingLayerRef = useRef<SVGSVGElement>(null)
@@ -121,6 +126,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
         path: currentPath,
         stroke: strokeColor,
         stitchType: stitchType,
+        strokeWidth: strokeWidth,
       },
     ])
 
@@ -174,14 +180,14 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
     }
 
     // Add the paths to the group
-    paths.forEach(({ path, stroke, stitchType }) => {
+    paths.forEach(({ path, stroke, stitchType, strokeWidth }) => {
       if (stitchType === "running") {
         // Running stitch (solid line)
         const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path")
         pathElement.setAttribute("d", path)
         pathElement.setAttribute("fill", "none")
         pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
+        pathElement.setAttribute("stroke-width", strokeWidth)
         pathElement.setAttribute("stroke-linecap", "round")
         drawingGroup.appendChild(pathElement)
       } else if (stitchType === "chain") {
@@ -190,7 +196,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
         pathElement.setAttribute("d", path)
         pathElement.setAttribute("fill", "none")
         pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
+        pathElement.setAttribute("stroke-width", strokeWidth)
         pathElement.setAttribute("stroke-dasharray", "5 5")
         pathElement.setAttribute("stroke-linecap", "round")
         drawingGroup.appendChild(pathElement)
@@ -227,7 +233,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
             segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${endX} ${endY}`)
             segmentPath.setAttribute("fill", "none")
             segmentPath.setAttribute("stroke", isMainSegment ? colorCombo.main : colorCombo.accent)
-            segmentPath.setAttribute("stroke-width", "3")
+            segmentPath.setAttribute("stroke-width", strokeWidth)
             segmentPath.setAttribute("stroke-linecap", "butt")
             drawingGroup.appendChild(segmentPath)
 
@@ -241,7 +247,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
             segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${nextPoint.x} ${nextPoint.y}`)
             segmentPath.setAttribute("fill", "none")
             segmentPath.setAttribute("stroke", isMainSegment ? colorCombo.main : colorCombo.accent)
-            segmentPath.setAttribute("stroke-width", "3")
+            segmentPath.setAttribute("stroke-width", strokeWidth)
             segmentPath.setAttribute("stroke-linecap", "butt")
             drawingGroup.appendChild(segmentPath)
 
@@ -302,7 +308,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
       case "running":
         return (
           <div className="w-full h-4 flex items-center">
-            <div className="w-full h-2 bg-black rounded-full"></div>
+            <div className="w-full h-3 bg-black rounded-full"></div>
           </div>
         )
       case "chain":
@@ -407,6 +413,22 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
                 </div>
               </div>
 
+              {/* Stroke Width Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Width:</span>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={strokeWidth}
+                    onChange={(e) => setStrokeWidth(e.target.value)}
+                    className="w-24"
+                  />
+                  <span className="text-sm">{strokeWidth}px</span>
+                </div>
+              </div>
+
               {/* Undo/Redo buttons */}
               <div className="flex space-x-2">
                 <button
@@ -472,14 +494,20 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
                 {isDrawing && currentPath && (
                   <>
                     {stitchType === "running" && (
-                      <path d={currentPath} fill="none" stroke={strokeColor} strokeWidth="3" strokeLinecap="round" />
+                      <path
+                        d={currentPath}
+                        fill="none"
+                        stroke={strokeColor}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                      />
                     )}
                     {stitchType === "chain" && (
                       <path
                         d={currentPath}
                         fill="none"
                         stroke={strokeColor}
-                        strokeWidth="3"
+                        strokeWidth={strokeWidth}
                         strokeDasharray="5 5"
                         strokeLinecap="round"
                       />
@@ -545,7 +573,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
                               d={segment.path}
                               fill="none"
                               stroke={segment.isMain ? colorCombo.main : colorCombo.accent}
-                              strokeWidth="3"
+                              strokeWidth={strokeWidth}
                               strokeLinecap="butt"
                             />
                           ))
@@ -559,14 +587,20 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
                 {paths.map((path, index) => (
                   <React.Fragment key={index}>
                     {path.stitchType === "running" && (
-                      <path d={path.path} fill="none" stroke={path.stroke} strokeWidth="3" strokeLinecap="round" />
+                      <path
+                        d={path.path}
+                        fill="none"
+                        stroke={path.stroke}
+                        strokeWidth={path.strokeWidth}
+                        strokeLinecap="round"
+                      />
                     )}
                     {path.stitchType === "chain" && (
                       <path
                         d={path.path}
                         fill="none"
                         stroke={path.stroke}
-                        strokeWidth="3"
+                        strokeWidth={path.strokeWidth}
                         strokeDasharray="5 5"
                         strokeLinecap="round"
                       />
@@ -638,7 +672,7 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
                               d={segment.path}
                               fill="none"
                               stroke={segment.isMain ? colorCombo.main : colorCombo.accent}
-                              strokeWidth="3"
+                              strokeWidth={path.strokeWidth}
                               strokeLinecap="butt"
                             />
                           ))
