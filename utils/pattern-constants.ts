@@ -1,18 +1,18 @@
 export const PATTERN_COLORS = {
   NORTH_STAR: {
-    STROKE: "#CFCECE",
+    STROKE: "#e2e2e2",
     FILL: "white",
   },
   CROSSROADS: {
-    STROKE: "#CFCECE",
+    STROKE: "#e2e2e2",
     FILL: "white",
   },
   LOG_CABIN: {
-    STROKE: "#C7C7C7",
+    STROKE: "#e2e2e2",
     FILL: "white",
   },
   BEAR_PAWS: {
-    STROKE: "#000000", // Changed from light gray to black
+    STROKE: "#e2e2e2", // Changed from black to #e2e2e2
     FILL: "white",
   },
 }

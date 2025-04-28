@@ -1,649 +1,325 @@
 "use client"
 
-import React from "react"
+import type React from "react"
 
-import { useState, useRef } from "react"
-import { X, Undo2, Redo2 } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+
+import { X, Undo, Redo } from "lucide-react"
 
 interface ShapeDrawingProps {
-  selectedShape: string | null
+  selectedShape: string
   svgRef: React.RefObject<SVGSVGElement>
   viewBox: string
   onClose: () => void
 }
 
-// Define stitch types
-type StitchType = "running" | "chain" | "cross"
-
-// Define cross stitch color combinations
-const crossStitchCombinations = [
-  { main: "#251e1d", accent: "#89a3cb" }, // Dark brown/black with light blue
-  { main: "#842735", accent: "#251e1d" }, // Burgundy with black
-  { main: "#ef9929", accent: "#5d6341" }, // Orange with olive green
-  { main: "#daccb8", accent: "#b79ec2" }, // Beige with lavender
-  { main: "#89a3cb", accent: "#842735" }, // Light blue with burgundy
-  { main: "#b79ec2", accent: "#35405a" }, // Lavender with navy blue
-  { main: "#35405a", accent: "#ef9929" }, // Navy blue with orange
-  { main: "#5d6341", accent: "#daccb8" }, // Olive green with beige
-]
-
-// Add color options array with the requested colors
-const colorOptions = [
-  "#251e1d", // Dark brown/black
-  "#842735", // Burgundy
-  "#ef9929", // Orange
-  "#daccb8", // Beige
-  "#89a3cb", // Light blue
-  "#b79ec2", // Lavender
-  "#35405a", // Navy blue
-  "#5d6341", // Olive green
-]
-
 export default function ShapeDrawing({ selectedShape, svgRef, viewBox, onClose }: ShapeDrawingProps) {
   const [isDrawing, setIsDrawing] = useState(false)
-  const [currentPath, setCurrentPath] = useState<string>("")
-  const [paths, setPaths] = useState<{ path: string; stroke: string; stitchType: StitchType }[]>([])
-  const [undoStack, setUndoStack] = useState<{ path: string; stroke: string; stitchType: StitchType }[]>([])
-  const [stitchType, setStitchType] = useState<StitchType>("running")
-  const [stroke, setStroke] = useState<string>("#251e1d")
-  const [selectedCrossStitchIndex, setSelectedCrossStitchIndex] = useState(0)
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const drawingLayerRef = useRef<SVGSVGElement>(null)
+  const [currentPath, setCurrentPath] = useState("")
+  const [paths, setPaths] = useState<string[]>([])
+  const [redoPaths, setRedoPaths] = useState<string[]>([])
+  const [strokeColor, setStrokeColor] = useState("#000000")
+  const [strokeWidth, setStrokeWidth] = useState(2)
+  const [strokeDasharray, setStrokeDasharray] = useState("")
+  const canvasRef = useRef<SVGSVGElement>(null)
+  const shapeRef = useRef<SVGElement | null>(null)
+  const [shapeBounds, setShapeBounds] = useState({ x: 0, y: 0, width: 0, height: 0 })
 
-  // Create a function to get the SVG point from a mouse or touch event
-  const getSVGPoint = (event: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent): SVGPoint | null => {
-    if (!svgRef.current) return null
+  // Available colors for drawing
+  const colors = [
+    "#000000", // Black
+    "#8B0000", // Dark Red
+    "#E49B0F", // Orange
+    "#D2B48C", // Tan
+    "#6B8E23", // Olive Green
+    "#4682B4", // Steel Blue
+    "#9370DB", // Medium Purple
+    "#2F4F4F", // Dark Slate Gray
+  ]
 
-    // Get the client coordinates
-    let clientX, clientY
-    if ((event as TouchEvent).touches) {
-      clientX = (event as TouchEvent).touches[0].clientX
-      clientY = (event as TouchEvent).touches[0].clientY
-    } else {
-      clientX = (event as MouseEvent).clientX
-      clientY = (event as MouseEvent).clientY
+  // Available stroke patterns
+  const strokePatterns = [
+    "", // Solid line
+    "5,5", // Dashed line
+    "2,2", // Dotted line
+    "10,5,5,5", // Dash-dot line
+  ]
+
+  // Find the selected shape element when component mounts
+  useEffect(() => {
+    if (!svgRef.current) return
+
+    // Find the shape by ID or data-shape-id
+    const shape = svgRef.current.querySelector(`#${selectedShape}, [data-shape-id="${selectedShape}"]`) as SVGElement
+
+    if (shape) {
+      shapeRef.current = shape
+
+      // Get the bounding box of the shape
+      const bbox = shape.getBBox()
+      setShapeBounds({
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+      })
     }
+  }, [selectedShape, svgRef])
 
-    // Create a point in screen coordinates
-    const svg = svgRef.current
-    const point = svg.createSVGPoint()
-    point.x = clientX
-    point.y = clientY
-
-    // Convert to SVG coordinates
-    const screenCTM = svg.getScreenCTM()
-    if (!screenCTM) return null
-
-    return point.matrixTransform(screenCTM.inverse())
-  }
-
-  // Helper function to extract points from a path string
-  const extractPointsFromPath = (pathString: string): { x: number; y: number }[] => {
-    const points: { x: number; y: number }[] = []
-    const parts = pathString.split(/[MLZ]\s*/i).filter(Boolean)
-
-    for (const part of parts) {
-      const coords = part.trim().split(/\s+/)
-      for (let i = 0; i < coords.length; i += 2) {
-        if (i + 1 < coords.length) {
-          const x = Number.parseFloat(coords[i])
-          const y = Number.parseFloat(coords[i + 1])
-          if (!isNaN(x) && !isNaN(y)) {
-            points.push({ x, y })
-          }
-        }
-      }
-    }
-
-    return points
-  }
-
-  // Get the selected shape element
-  const getSelectedShapeElement = () => {
-    if (!svgRef.current || !selectedShape) return null
-
-    // Find the shape element by its ID or data attribute
-    return (
-      svgRef.current.querySelector(`[data-shape-id="${selectedShape}"]`) || svgRef.current.getElementById(selectedShape)
-    )
-  }
-
-  // Start drawing
-  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!selectedShape) return
-    e.preventDefault()
-
-    const shapeElement = getSelectedShapeElement()
-    if (!shapeElement) return
+  // Handle mouse down event to start drawing
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!canvasRef.current) return
 
     setIsDrawing(true)
+    setRedoPaths([]) // Clear redo stack when starting a new drawing
 
-    const point = getSVGPoint(e)
-    if (!point) return
-
-    setCurrentPath(`M ${point.x} ${point.y}`)
+    // Get the point in SVG coordinates
+    const pt = getMousePosition(e)
+    const newPath = `M ${pt.x} ${pt.y}`
+    setCurrentPath(newPath)
   }
 
-  // Continue drawing
-  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || !selectedShape) return
-    e.preventDefault()
+  // Handle mouse move event to continue drawing
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!isDrawing || !canvasRef.current) return
 
-    const point = getSVGPoint(e)
-    if (!point) return
-
-    setCurrentPath((prev) => `${prev} L ${point.x} ${point.y}`)
+    // Get the point in SVG coordinates
+    const pt = getMousePosition(e)
+    setCurrentPath((prev) => `${prev} L ${pt.x} ${pt.y}`)
   }
 
-  // End drawing
-  const handleMouseUp = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || !currentPath) return
-    e.preventDefault()
-
-    // Push the current state to the undo stack
-    setUndoStack((prev) => [...prev, { path: currentPath, stroke: stroke, stitchType: stitchType }])
-
-    setPaths((prev) => [
-      ...prev,
-      {
-        path: currentPath,
-        stroke: stroke,
-        stitchType: stitchType,
-      },
-    ])
+  // Handle mouse up event to finish drawing
+  const handleMouseUp = () => {
+    if (!isDrawing) return
 
     setIsDrawing(false)
-    setCurrentPath("")
+    if (currentPath) {
+      setPaths((prev) => [...prev, currentPath])
+      setCurrentPath("")
+    }
   }
 
-  // Undo the last drawing action
-  const undo = () => {
+  // Handle mouse leave event to finish drawing
+  const handleMouseLeave = () => {
+    if (isDrawing) {
+      handleMouseUp()
+    }
+  }
+
+  // Convert mouse position to SVG coordinates
+  const getMousePosition = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!canvasRef.current) return { x: 0, y: 0 }
+
+    const CTM = canvasRef.current.getScreenCTM()
+    if (!CTM) return { x: 0, y: 0 }
+
+    return {
+      x: (e.clientX - CTM.e) / CTM.a,
+      y: (e.clientY - CTM.f) / CTM.d,
+    }
+  }
+
+  // Handle undo action
+  const handleUndo = () => {
     if (paths.length === 0) return
 
-    // Get the last path from the paths array
     const lastPath = paths[paths.length - 1]
-
-    // Remove the last path from the paths array
-    setPaths((prev) => prev.slice(0, -1))
-
-    // Push the last path to the undo stack
-    setUndoStack((prev) => [...prev, lastPath])
+    setPaths(paths.slice(0, -1))
+    setRedoPaths((prev) => [...prev, lastPath])
   }
 
-  // Redo the last undone action
-  const redo = () => {
-    if (undoStack.length === 0) return
+  // Handle redo action
+  const handleRedo = () => {
+    if (redoPaths.length === 0) return
 
-    // Get the last path from the undo stack
-    const lastPath = undoStack[undoStack.length - 1]
-
-    // Remove the last path from the undo stack
-    setUndoStack((prev) => prev.slice(0, -1))
-
-    // Add the last path back to the paths array
-    setPaths((prev) => [...prev, lastPath])
+    const pathToRedo = redoPaths[redoPaths.length - 1]
+    setRedoPaths(redoPaths.slice(0, -1))
+    setPaths((prev) => [...prev, pathToRedo])
   }
 
-  // Clear all drawings
-  const clearDrawings = () => {
-    setPaths([])
-    setUndoStack([])
-  }
-
-  // Save drawings to the main SVG
-  const saveDrawings = () => {
-    if (!svgRef.current || !selectedShape) return
-
-    // Find the shape element
-    const shapeElement = getSelectedShapeElement()
-    if (!shapeElement) return
-
-    // Create a group for the paths if it doesn't exist
-    let pathGroup = svgRef.current.querySelector(`g[data-drawing-group="${selectedShape}"]`)
-    if (!pathGroup) {
-      pathGroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
-      pathGroup.setAttribute("data-drawing-group", selectedShape)
-      svgRef.current.appendChild(pathGroup)
-    } else {
-      // Clear existing paths
-      while (pathGroup.firstChild) {
-        pathGroup.removeChild(pathGroup.firstChild)
-      }
+  // Save the drawing to the shape
+  const saveDrawing = () => {
+    if (!shapeRef.current || !svgRef.current || paths.length === 0) {
+      onClose()
+      return
     }
 
-    // Create a clip path if it doesn't exist
-    let clipPath = svgRef.current.querySelector(`clipPath[id="clip-${selectedShape}"]`)
-    if (!clipPath) {
-      clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath")
-      clipPath.setAttribute("id", `clip-${selectedShape}`)
+    // Create a group element to hold all the paths
+    const drawingGroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
+    drawingGroup.setAttribute("class", "shape-drawing")
+    drawingGroup.setAttribute("data-shape-id", selectedShape)
 
-      // Clone the shape element and add it to the clip path
-      const clonedShape = shapeElement.cloneNode(true) as SVGElement
-      clipPath.appendChild(clonedShape)
-
-      // Add the clip path to the defs
-      let defs = svgRef.current.querySelector("defs")
-      if (!defs) {
-        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs")
-        svgRef.current.appendChild(defs)
+    // Add all paths to the group
+    paths.forEach((pathData) => {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+      path.setAttribute("d", pathData)
+      path.setAttribute("stroke", strokeColor)
+      path.setAttribute("stroke-width", strokeWidth.toString())
+      if (strokeDasharray) {
+        path.setAttribute("stroke-dasharray", strokeDasharray)
       }
-      defs.appendChild(clipPath)
-    }
-
-    // Set the clip path on the path group
-    pathGroup.setAttribute("clip-path", `url(#clip-${selectedShape})`)
-
-    // Add the paths to the group
-    paths.forEach(({ path, stroke, stitchType }) => {
-      if (stitchType === "running") {
-        // Running stitch (solid line)
-        const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        pathElement.setAttribute("d", path)
-        pathElement.setAttribute("fill", "none")
-        pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
-        pathElement.setAttribute("stroke-linecap", "round")
-        pathGroup.appendChild(pathElement)
-      } else if (stitchType === "chain") {
-        // Chain stitch (dashed line with rounded caps)
-        const pathElement = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        pathElement.setAttribute("d", path)
-        pathElement.setAttribute("fill", "none")
-        pathElement.setAttribute("stroke", stroke)
-        pathElement.setAttribute("stroke-width", "3")
-        pathElement.setAttribute("stroke-dasharray", "5 5")
-        pathElement.setAttribute("stroke-linecap", "round")
-        pathGroup.appendChild(pathElement)
-      } else if (stitchType === "cross") {
-        // Cross stitch (alternating black and blue segments)
-        const points = extractPointsFromPath(path)
-        if (points.length < 2) return
-
-        const { main, accent } = crossStitchCombinations[selectedCrossStitchIndex]
-
-        // Create segments along the path
-        const segmentLength = 20 // Length of each segment
-        let currentDistance = 0
-        let currentPoint = points[0]
-        let nextPointIndex = 1
-        let isMainSegment = true
-
-        while (nextPointIndex < points.length) {
-          const nextPoint = points[nextPointIndex]
-          const dx = nextPoint.x - currentPoint.x
-          const dy = nextPoint.y - currentPoint.y
-          const segmentDistance = Math.sqrt(dx * dx + dy * dy)
-
-          if (currentDistance + segmentDistance >= segmentLength) {
-            // Calculate the point at the end of this segment
-            const ratio = (segmentLength - currentDistance) / segmentDistance
-            const endX = currentPoint.x + dx * ratio
-            const endY = currentPoint.y + dy * ratio
-
-            // Create a path for this segment
-            const segmentPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
-            segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${endX} ${endY}`)
-            segmentPath.setAttribute("fill", "none")
-            segmentPath.setAttribute("stroke", isMainSegment ? main : accent) // Alternate colors
-            segmentPath.setAttribute("stroke-width", "3")
-            segmentPath.setAttribute("stroke-linecap", "butt")
-            pathGroup.appendChild(segmentPath)
-
-            // Update for next segment
-            currentPoint = { x: endX, y: endY }
-            currentDistance = 0
-            isMainSegment = !isMainSegment
-          } else {
-            // Move to the next point
-            const segmentPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
-            segmentPath.setAttribute("d", `M ${currentPoint.x} ${currentPoint.y} L ${nextPoint.x} ${nextPoint.y}`)
-            segmentPath.setAttribute("fill", "none")
-            segmentPath.setAttribute("stroke", isMainSegment ? main : accent) // Alternate colors
-            segmentPath.setAttribute("stroke-width", "3")
-            segmentPath.setAttribute("stroke-linecap", "butt")
-            pathGroup.appendChild(segmentPath)
-
-            currentDistance += segmentDistance
-            currentPoint = nextPoint
-            nextPointIndex++
-
-            // If we've reached the segment length, switch colors
-            if (currentDistance >= segmentLength) {
-              currentDistance = 0
-              isMainSegment = !isMainSegment
-            }
-          }
-        }
-      }
+      path.setAttribute("fill", "none")
+      path.setAttribute("pointer-events", "none")
+      drawingGroup.appendChild(path)
     })
+
+    // Find if there's an existing drawing for this shape and remove it
+    const existingDrawing = svgRef.current.querySelector(`g.shape-drawing[data-shape-id="${selectedShape}"]`)
+    if (existingDrawing) {
+      existingDrawing.remove()
+    }
+
+    // Add the new drawing group to the SVG
+    svgRef.current.appendChild(drawingGroup)
 
     onClose()
   }
 
-  // Update the renderStitchPreview function to better display the chain stitch and make the cross stitch match the screenshot
-  const renderStitchPreview = (type: StitchType) => {
-    switch (type) {
-      case "running":
-        return (
-          <div className="w-full h-4 flex items-center">
-            <div className="w-full h-2 bg-black rounded-full"></div>
-          </div>
-        )
-      case "chain":
-        return (
-          <div className="w-full h-4 flex items-center justify-between">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="w-2 h-2 bg-black rounded-full"></div>
-            ))}
-          </div>
-        )
-      case "cross":
-        const { main, accent } = crossStitchCombinations[selectedCrossStitchIndex]
-        return (
-          <div className="w-full h-4 flex items-center">
-            <div className="w-[20%] h-2" style={{ backgroundColor: main }}></div>
-            <div className="w-[10%] h-2" style={{ backgroundColor: accent }}></div>
-            <div className="w-[20%] h-2" style={{ backgroundColor: main }}></div>
-            <div className="w-[10%] h-2" style={{ backgroundColor: accent }}></div>
-            <div className="w-[20%] h-2" style={{ backgroundColor: main }}></div>
-            <div className="w-[10%] h-2" style={{ backgroundColor: accent }}></div>
-            <div className="w-[10%] h-2" style={{ backgroundColor: main }}></div>
-          </div>
-        )
-    }
-  }
-
-  if (!selectedShape) return null
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold">Draw on Shape</h3>
-          <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200">
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-4 mb-4">
-          {/* Stitch style options */}
-          <div className="flex space-x-4">
-            <button
-              className={`p-2 rounded ${stitchType === "running" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("running")}
-              title="Running Stitch"
-            >
-              <div className="w-20 h-4 relative">{renderStitchPreview("running")}</div>
-            </button>
-            <button
-              className={`p-2 rounded ${stitchType === "chain" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("chain")}
-              title="Chain Stitch"
-            >
-              <div className="w-20 h-4 relative">{renderStitchPreview("chain")}</div>
-            </button>
-            <button
-              className={`p-2 rounded ${stitchType === "cross" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("cross")}
-              title="Cross Stitch"
-            >
-              <div className="w-20 h-4 relative">{renderStitchPreview("cross")}</div>
-            </button>
-          </div>
-
-          {/* Color selector */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm">Color:</span>
-            {stitchType !== "cross" ? (
-              <div className="flex flex-wrap gap-1 max-w-[200px]">
-                {colorOptions.map((color) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="relative flex h-full w-full max-w-7xl items-center justify-center">
+        {/* Drawing tools panel - positioned to the left */}
+        <div
+          className="absolute left-4 top-1/2 -translate-y-1/2 transform rounded-lg bg-white p-4 shadow-lg"
+          style={{ height: "500px", width: "120px" }}
+        >
+          <div className="flex h-full flex-col justify-between">
+            <div>
+              <h3 className="mb-2 text-center font-bold">Color:</h3>
+              <div className="mb-4 grid grid-cols-3 gap-2">
+                {colors.map((color) => (
                   <button
                     key={color}
-                    className={`w-6 h-6 rounded-full border ${stroke === color ? "ring-2 ring-blue-500" : ""}`}
+                    className={`h-8 w-8 rounded-full border ${
+                      strokeColor === color ? "border-2 border-blue-500" : "border-gray-300"
+                    }`}
                     style={{ backgroundColor: color }}
-                    onClick={() => setStroke(color)}
-                    title={color}
+                    onClick={() => setStrokeColor(color)}
+                    aria-label={`Select ${color} color`}
                   />
                 ))}
               </div>
-            ) : (
-              <div className="flex flex-wrap gap-1 max-w-[200px]">
-                {crossStitchCombinations.map((_, index) => (
+
+              <h3 className="mb-2 text-center font-bold">Stitch:</h3>
+              <div className="mb-4 flex flex-col space-y-2">
+                {strokePatterns.map((pattern, index) => (
                   <button
                     key={index}
-                    className={`w-6 h-6 rounded-full border ${selectedCrossStitchIndex === index ? "ring-2 ring-blue-500" : ""}`}
-                    style={{
-                      background: `linear-gradient(to right, ${crossStitchCombinations[index].main} 50%, ${crossStitchCombinations[index].accent} 50%)`,
-                    }}
-                    onClick={() => setSelectedCrossStitchIndex(index)}
-                    title={`Main: ${crossStitchCombinations[index].main}, Accent: ${crossStitchCombinations[index].accent}`}
-                  />
+                    className={`h-8 rounded border ${
+                      strokeDasharray === pattern ? "border-2 border-blue-500" : "border-gray-300"
+                    }`}
+                    onClick={() => setStrokeDasharray(pattern)}
+                    aria-label={`Select stitch pattern ${index + 1}`}
+                  >
+                    <svg className="h-full w-full">
+                      <line
+                        x1="10%"
+                        y1="50%"
+                        x2="90%"
+                        y2="50%"
+                        stroke="black"
+                        strokeWidth="2"
+                        strokeDasharray={pattern || "none"}
+                      />
+                    </svg>
+                  </button>
                 ))}
               </div>
-            )}
+            </div>
+
+            <div className="mt-auto grid grid-cols-2 gap-2">
+              <button
+                onClick={handleUndo}
+                disabled={paths.length === 0}
+                className={`flex items-center justify-center rounded-md border p-2 ${
+                  paths.length === 0 ? "cursor-not-allowed opacity-50" : "hover:bg-gray-100"
+                }`}
+                aria-label="Undo"
+              >
+                <Undo size={20} />
+              </button>
+              <button
+                onClick={handleRedo}
+                disabled={redoPaths.length === 0}
+                className={`flex items-center justify-center rounded-md border p-2 ${
+                  redoPaths.length === 0 ? "cursor-not-allowed opacity-50" : "hover:bg-gray-100"
+                }`}
+                aria-label="Redo"
+              >
+                <Redo size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Drawing canvas */}
+        <div className="relative h-[80vh] w-[80vw] overflow-hidden rounded-lg bg-white shadow-lg">
+          <div className="absolute right-2 top-2 z-10 flex space-x-2">
+            <button
+              onClick={saveDrawing}
+              className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+              aria-label="Save drawing"
+            >
+              Save
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-md bg-gray-200 p-2 hover:bg-gray-300"
+              aria-label="Close drawing mode"
+            >
+              <X size={20} />
+            </button>
           </div>
 
-          <button className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200" onClick={clearDrawings}>
-            Clear
-          </button>
-          <button className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" onClick={undo}>
-            <Undo2 size={20} />
-          </button>
-          <button className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200" onClick={redo}>
-            <Redo2 size={20} />
-          </button>
-        </div>
-
-        <div
-          ref={canvasRef}
-          className="flex-1 border border-gray-300 rounded overflow-hidden cursor-crosshair bg-white relative"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleMouseDown}
-          onTouchMove={handleMouseMove}
-          onTouchEnd={handleMouseUp}
-        >
           <svg
-            ref={drawingLayerRef}
-            width="100%"
-            height="100%"
+            ref={canvasRef}
+            className="h-full w-full cursor-crosshair"
             viewBox={viewBox}
-            style={{ maxHeight: "calc(90vh - 150px)" }}
-            className="absolute top-0 left-0 w-full h-full"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
           >
-            {/* Preview of the selected shape */}
-            <g opacity="0.3">
-              {getSelectedShapeElement() && <use href={`#${selectedShape}`} xlinkHref={`#${selectedShape}`} />}
-            </g>
-
-            {/* Current path being drawn */}
-            {isDrawing && currentPath && (
-              <>
-                {stitchType === "running" && (
-                  <path d={currentPath} fill="none" stroke={stroke} strokeWidth="3" strokeLinecap="round" />
-                )}
-                {stitchType === "chain" && (
-                  <path
-                    d={currentPath}
-                    fill="none"
-                    stroke={stroke}
-                    strokeWidth="3"
-                    strokeDasharray="5 5"
-                    strokeLinecap="round"
-                  />
-                )}
-                {stitchType === "cross" && (
-                  <>
-                    {(() => {
-                      const points = extractPointsFromPath(currentPath)
-                      if (points.length < 2) return null
-
-                      const { main, accent } = crossStitchCombinations[selectedCrossStitchIndex]
-
-                      const segments = []
-                      const segmentLength = 20 // Length of each segment
-                      let currentDistance = 0
-                      let currentPoint = points[0]
-                      let nextPointIndex = 1
-                      let isMainSegment = true
-
-                      while (nextPointIndex < points.length) {
-                        const nextPoint = points[nextPointIndex]
-                        const dx = nextPoint.x - currentPoint.x
-                        const dy = nextPoint.y - currentPoint.y
-                        const segmentDistance = Math.sqrt(dx * dx + dy * dy)
-
-                        if (currentDistance + segmentDistance >= segmentLength) {
-                          // Calculate the point at the end of this segment
-                          const ratio = (segmentLength - currentDistance) / segmentDistance
-                          const endX = currentPoint.x + dx * ratio
-                          const endY = currentPoint.y + dy * ratio
-
-                          // Add a segment
-                          segments.push({
-                            path: `M ${currentPoint.x} ${currentPoint.y} L ${endX} ${endY}`,
-                            isMain: isMainSegment,
-                          })
-
-                          // Update for next segment
-                          currentPoint = { x: endX, y: endY }
-                          currentDistance = 0
-                          isMainSegment = !isMainSegment
-                        } else {
-                          // Move to the next point
-                          segments.push({
-                            path: `M ${currentPoint.x} ${currentPoint.y} L ${nextPoint.x} ${nextPoint.y}`,
-                            isMain: isMainSegment,
-                          })
-
-                          currentDistance += segmentDistance
-                          currentPoint = nextPoint
-                          nextPointIndex++
-
-                          // If we've reached the segment length, switch colors
-                          if (currentDistance >= segmentLength) {
-                            currentDistance = 0
-                            isMainSegment = !isMainSegment
-                          }
-                        }
-                      }
-
-                      return segments.map((segment, i) => (
-                        <path
-                          key={i}
-                          d={segment.path}
-                          fill="none"
-                          stroke={segment.isMain ? main : accent}
-                          strokeWidth="3"
-                          strokeLinecap="butt"
-                        />
-                      ))
-                    })()}
-                  </>
-                )}
-              </>
+            {/* Render the shape outline */}
+            {shapeRef.current && (
+              <rect
+                x={shapeBounds.x}
+                y={shapeBounds.y}
+                width={shapeBounds.width}
+                height={shapeBounds.height}
+                fill="none"
+                stroke="#3B82F6"
+                strokeWidth="2"
+                strokeDasharray="5,5"
+                pointerEvents="none"
+              />
             )}
 
-            {/* Existing paths */}
-            {paths.map((path, index) => {
-              const { main, accent } = crossStitchCombinations[selectedCrossStitchIndex]
-              return (
-                <React.Fragment key={index}>
-                  {path.stitchType === "running" && (
-                    <path d={path.path} fill="none" stroke={path.stroke} strokeWidth="3" strokeLinecap="round" />
-                  )}
-                  {path.stitchType === "chain" && (
-                    <path
-                      d={path.path}
-                      fill="none"
-                      stroke={path.stroke}
-                      strokeWidth="3"
-                      strokeDasharray="5 5"
-                      strokeLinecap="round"
-                    />
-                  )}
-                  {path.stitchType === "cross" && (
-                    <>
-                      {(() => {
-                        const points = extractPointsFromPath(path.path)
-                        if (points.length < 2) return null
+            {/* Render existing paths */}
+            {paths.map((path, index) => (
+              <path
+                key={index}
+                d={path}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeDasharray={strokeDasharray}
+                fill="none"
+                pointerEvents="none"
+              />
+            ))}
 
-                        const segmentLength = 20 // Length of each segment
-                        let currentDistance = 0
-                        let currentPoint = points[0]
-                        let nextPointIndex = 1
-                        let isMainSegment = true
-                        const segments = []
-
-                        while (nextPointIndex < points.length) {
-                          const nextPoint = points[nextPointIndex]
-                          const dx = nextPoint.x - currentPoint.x
-                          const dy = nextPoint.y - currentPoint.y
-                          const segmentDistance = Math.sqrt(dx * dx + dy * dy)
-
-                          if (currentDistance + segmentDistance >= segmentLength) {
-                            // Calculate the point at the end of this segment
-                            const ratio = (segmentLength - currentDistance) / segmentDistance
-                            const endX = currentPoint.x + dx * ratio
-                            const endY = currentPoint.y + dy * ratio
-
-                            // Add a segment
-                            segments.push({
-                              path: `M ${currentPoint.x} ${currentPoint.y} L ${endX} ${endY}`,
-                              isMain: isMainSegment,
-                            })
-
-                            // Update for next segment
-                            currentPoint = { x: endX, y: endY }
-                            currentDistance = 0
-                            isMainSegment = !isMainSegment
-                          } else {
-                            // Move to the next point
-                            segments.push({
-                              path: `M ${currentPoint.x} ${currentPoint.y} L ${nextPoint.x} ${nextPoint.y}`,
-                              isMain: isMainSegment,
-                            })
-
-                            currentDistance += segmentDistance
-                            currentPoint = nextPoint
-                            nextPointIndex++
-
-                            // If we've reached the segment length, switch colors
-                            if (currentDistance >= segmentLength) {
-                              currentDistance = 0
-                              isMainSegment = !isMainSegment
-                            }
-                          }
-                        }
-
-                        return segments.map((segment, i) => (
-                          <path
-                            key={i}
-                            d={segment.path}
-                            fill="none"
-                            stroke={segment.isMain ? main : accent}
-                            strokeWidth="3"
-                            strokeLinecap="butt"
-                          />
-                        ))
-                      })()}
-                    </>
-                  )}
-                </React.Fragment>
-              )
-            })}
+            {/* Render current path being drawn */}
+            {currentPath && (
+              <path
+                d={currentPath}
+                stroke={strokeColor}
+                strokeWidth={strokeWidth}
+                strokeDasharray={strokeDasharray}
+                fill="none"
+                pointerEvents="none"
+              />
+            )}
           </svg>
-        </div>
-
-        <div className="mt-4 flex justify-end space-x-2">
-          <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={saveDrawings}>
-            Save
-          </button>
         </div>
       </div>
     </div>

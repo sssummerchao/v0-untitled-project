@@ -23,7 +23,7 @@ export default function DrawingModeSelector({ onModeChange, initialMode = "selec
   }
 
   return (
-    <div className="fixed bottom-8 left-8 z-20 bg-white rounded-lg shadow-lg p-2 flex gap-2">
+    <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-20 bg-white rounded-lg shadow-lg p-2 flex gap-2">
       <button
         onClick={() => handleModeChange(false)}
         className={`p-2 rounded-md transition-colors ${

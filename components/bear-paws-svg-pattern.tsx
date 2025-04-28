@@ -980,7 +980,7 @@ export default function BearPawsSVGPattern({
           preserveAspectRatio="xMidYMid meet"
           style={{ backgroundColor: "white" }}
           fill="white"
-          stroke="#000000"
+          stroke="#e2e2e2"
         >
           {/* White background */}
           <rect x="0" y="0" width="1080" height="1080" fill="white" style={{ zIndex: -1 }} />
@@ -1016,7 +1016,7 @@ export default function BearPawsSVGPattern({
                 <polygon
                   points={shape.points}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#000000"
+                  stroke={shape.hasImage ? "none" : "#CFCECE"}
                   strokeWidth="2"
                   strokeLinejoin="miter"
                   strokeLinecap="butt"
@@ -1031,7 +1031,7 @@ export default function BearPawsSVGPattern({
                   width={shape.width}
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#000000"
+                  stroke={shape.hasImage ? "none" : "#CFCECE"}
                   strokeWidth="2"
                   strokeLinejoin="miter"
                   strokeLinecap="butt"

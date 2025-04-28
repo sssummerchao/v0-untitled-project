@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Undo2, Redo2 } from "lucide-react"
+import { Undo2, Redo2, GripVertical } from "lucide-react"
 
 // Update the interface to include defaultStrokeWidth prop
 interface FreeDrawingCanvasProps {
@@ -46,7 +46,49 @@ export default function FreeDrawingCanvas({
   const [selectedCrossStitchIndex, setSelectedCrossStitchIndex] = useState(0)
   const canvasRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<SVGSVGElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const [drawingGroupId] = useState(`drawing-group-${Math.random().toString(36).substring(2, 9)}`)
+  const [defaultPositionSet, setDefaultPositionSet] = useState(false)
+
+  // State for draggable menu
+  const [menuPosition, setMenuPosition] = useState({ x: 180, y: 0 }) // Y will be calculated on mount
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [hasBeenDragged, setHasBeenDragged] = useState(false)
+
+  // Calculate and set the default position on mount
+  useEffect(() => {
+    if (defaultPositionSet) return
+
+    // Set the default position to match the current position on the log cabin page
+    const calculateDefaultPosition = () => {
+      // Get the viewport height
+      const viewportHeight = window.innerHeight
+
+      // Calculate the vertical center position
+      const verticalCenter = viewportHeight / 2
+
+      // Apply the same transform that was used before (translateY(-50%) translateY(30px))
+      // This means: move up by half the height of the menu (approx 250px) and then down by 30px
+      const menuHeight = 500 // The height of our menu
+      const yPosition = verticalCenter - menuHeight / 2 + 30
+
+      setMenuPosition((prev) => ({ ...prev, y: yPosition }))
+      setDefaultPositionSet(true)
+    }
+
+    calculateDefaultPosition()
+
+    // Recalculate if window is resized before the menu is dragged
+    const handleResize = () => {
+      if (!hasBeenDragged) {
+        calculateDefaultPosition()
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [defaultPositionSet, hasBeenDragged])
 
   // Extract viewBox dimensions
   const viewBoxDimensions = viewBox.split(" ").map(Number)
@@ -385,110 +427,188 @@ export default function FreeDrawingCanvas({
     }
   }, [strokeColor])
 
-  // Render stitch preview based on type
-  const renderStitchPreview = (type: StitchType) => {
-    switch (type) {
-      case "running":
-        return (
-          <div className="w-full h-2 flex items-center">
-            <div className="w-full h-1 bg-black rounded-full"></div>
-          </div>
-        )
-      case "chain":
-        return (
-          <div className="w-full h-2 flex items-center justify-between">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="w-2 h-1 bg-black rounded-full"></div>
-            ))}
-          </div>
-        )
-      case "cross":
-        const colorCombo = crossStitchCombinations[selectedCrossStitchIndex]
-        return (
-          <div className="w-full h-2 flex items-center">
-            <div className="w-[20%] h-1" style={{ backgroundColor: colorCombo.main }}></div>
-            <div className="w-[10%] h-1" style={{ backgroundColor: colorCombo.accent }}></div>
-            <div className="w-[20%] h-1" style={{ backgroundColor: colorCombo.main }}></div>
-            <div className="w-[10%] h-1" style={{ backgroundColor: colorCombo.accent }}></div>
-            <div className="w-[20%] h-1" style={{ backgroundColor: colorCombo.main }}></div>
-            <div className="w-[10%] h-1" style={{ backgroundColor: colorCombo.accent }}></div>
-            <div className="w-[10%] h-1" style={{ backgroundColor: colorCombo.main }}></div>
-          </div>
-        )
+  // Draggable menu handlers
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
     }
+
+    // Calculate the offset from the mouse position to the menu's top-left corner
+    const menuRect = menuRef.current?.getBoundingClientRect()
+    if (!menuRect) return
+
+    setDragOffset({
+      x: clientX - menuRect.left,
+      y: clientY - menuRect.top,
+    })
+
+    setIsDragging(true)
   }
+
+  const handleDragMove = (e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return
+    e.preventDefault()
+
+    let clientX, clientY
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else {
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+
+    // Calculate new position based on mouse position and initial offset
+    const newX = clientX - dragOffset.x
+    const newY = clientY - dragOffset.y
+
+    setMenuPosition({ x: newX, y: newY })
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    setHasBeenDragged(true)
+  }
+
+  // Add and remove event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleDragMove)
+      window.addEventListener("touchmove", handleDragMove)
+      window.addEventListener("mouseup", handleDragEnd)
+      window.addEventListener("touchend", handleDragEnd)
+    } else {
+      window.removeEventListener("mousemove", handleDragMove)
+      window.removeEventListener("touchmove", handleDragMove)
+      window.removeEventListener("mouseup", handleDragEnd)
+      window.removeEventListener("touchend", handleDragEnd)
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleDragMove)
+      window.removeEventListener("touchmove", handleDragMove)
+      window.removeEventListener("mouseup", handleDragEnd)
+      window.removeEventListener("touchend", handleDragEnd)
+    }
+  }, [isDragging])
 
   if (!isActive) return null
 
   return (
     <>
-      {/* Drawing tools panel - positioned above the mode selector */}
+      {/* Draggable drawing tools panel */}
       <div
-        className="fixed bottom-36 left-8 z-20 bg-white rounded-lg shadow-lg p-2 flex flex-col gap-2"
-        style={{ width: "80px" }}
+        ref={menuRef}
+        className="fixed z-20 bg-white rounded-lg shadow-lg"
+        style={{
+          left: `${menuPosition.x}px`,
+          top: `${menuPosition.y}px`,
+          width: "120px",
+          height: "500px",
+          overflowY: "auto",
+          cursor: isDragging ? "grabbing" : "default",
+        }}
       >
-        {/* Color selector - vertical layout */}
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-medium">Color:</span>
-          <div className="grid grid-cols-3 gap-1">
-            {colorOptions.map((color) => (
+        {/* Drag handle */}
+        <div
+          className="h-8 flex items-center justify-center bg-gray-100 rounded-t-lg cursor-grab active:cursor-grabbing"
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        >
+          <GripVertical size={16} className="text-gray-500" />
+        </div>
+
+        <div className="p-3">
+          {/* Color selector - as per the design */}
+          <div className="mb-4">
+            <h3 className="text-xl font-normal mb-2 text-center">Color:</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {colorOptions.map((color) => (
+                <button
+                  key={color}
+                  className={`w-10 h-10 rounded-full border ${strokeColor === color ? "ring-2 ring-blue-500" : ""}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => setStrokeColor(color)}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Stitch style options */}
+          <div className="mb-4">
+            <h3 className="text-xl font-normal mb-2 text-center">Stitch:</h3>
+            <div className="flex flex-col gap-2">
+              {/* Running stitch */}
               <button
-                key={color}
-                className={`w-5 h-5 rounded-full border ${strokeColor === color ? "ring-2 ring-blue-500" : ""}`}
-                style={{ backgroundColor: color }}
-                onClick={() => setStrokeColor(color)}
-                title={color}
-              />
-            ))}
-          </div>
-        </div>
+                className={`p-2 rounded-lg ${stitchType === "running" ? "bg-blue-100" : "bg-gray-100 hover:bg-gray-200"}`}
+                onClick={() => setStitchType("running")}
+                title="Running Stitch"
+              >
+                <div className="w-full h-2 flex items-center justify-center">
+                  <div className="w-full h-1 bg-black rounded-full"></div>
+                </div>
+              </button>
 
-        {/* Stitch style options */}
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs font-medium">Stitch:</span>
-          <div className="flex flex-col gap-1 w-full">
+              {/* Chain stitch */}
+              <button
+                className={`p-2 rounded-lg ${stitchType === "chain" ? "bg-blue-100" : "bg-gray-100 hover:bg-gray-200"}`}
+                onClick={() => setStitchType("chain")}
+                title="Chain Stitch"
+              >
+                <div className="w-full h-2 flex items-center justify-between">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="w-1.5 h-1.5 bg-black rounded-full"></div>
+                  ))}
+                </div>
+              </button>
+
+              {/* Cross stitch */}
+              <button
+                className={`p-2 rounded-lg ${stitchType === "cross" ? "bg-blue-100" : "bg-gray-100 hover:bg-gray-200"}`}
+                onClick={() => setStitchType("cross")}
+                title="Cross Stitch"
+              >
+                <div className="w-full h-2 flex items-center">
+                  <div className="w-[20%] h-1.5 bg-black"></div>
+                  <div className="w-[10%] h-1.5 bg-[#89a3cb]"></div>
+                  <div className="w-[20%] h-1.5 bg-black"></div>
+                  <div className="w-[10%] h-1.5 bg-[#89a3cb]"></div>
+                  <div className="w-[20%] h-1.5 bg-black"></div>
+                  <div className="w-[10%] h-1.5 bg-[#89a3cb]"></div>
+                  <div className="w-[10%] h-1.5 bg-black"></div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Undo/Redo buttons */}
+          <div className="flex justify-between">
             <button
-              className={`p-1 rounded w-full relative ${stitchType === "running" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("running")}
-              title="Running Stitch"
+              className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-12 h-8"
+              onClick={handleUndo}
+              disabled={paths.length === 0}
+              title="Undo"
             >
-              {renderStitchPreview("running")}
+              <Undo2 size={16} />
             </button>
             <button
-              className={`p-1 rounded w-full relative ${stitchType === "chain" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("chain")}
-              title="Chain Stitch"
+              className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-12 h-8"
+              onClick={handleRedo}
+              disabled={undoStack.length === 0}
+              title="Redo"
             >
-              {renderStitchPreview("chain")}
-            </button>
-            <button
-              className={`p-1 rounded w-full relative ${stitchType === "cross" ? "bg-blue-100" : "hover:bg-gray-100"}`}
-              onClick={() => setStitchType("cross")}
-              title="Cross Stitch"
-            >
-              {renderStitchPreview("cross")}
+              <Redo2 size={16} />
             </button>
           </div>
-        </div>
-
-        {/* Undo/Redo buttons */}
-        <div className="flex justify-between mt-1">
-          <button
-            className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center justify-center"
-            onClick={handleUndo}
-            disabled={paths.length === 0}
-            title="Undo"
-          >
-            <Undo2 size={14} />
-          </button>
-          <button
-            className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center justify-center"
-            onClick={handleRedo}
-            disabled={undoStack.length === 0}
-            title="Redo"
-          >
-            <Redo2 size={14} />
-          </button>
         </div>
       </div>
 

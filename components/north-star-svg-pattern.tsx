@@ -616,7 +616,7 @@ export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingM
                   key={shape.id}
                   points={shape.points}
                   fill={hasImage ? `url(#pattern-${shape.id})` : "white"}
-                  stroke="#CFCECE"
+                  stroke={hasImage ? "none" : "#CFCECE"}
                   strokeWidth="1"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
@@ -642,7 +642,7 @@ export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingM
                   width={shape.width}
                   height={shape.height}
                   fill={hasImage ? `url(#pattern-${shape.id})` : "white"}
-                  stroke="#CFCECE"
+                  stroke={hasImage ? "none" : "#CFCECE"}
                   strokeWidth="1"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"

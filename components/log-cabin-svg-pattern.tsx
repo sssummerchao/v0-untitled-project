@@ -728,7 +728,7 @@ export default function LogCabinSVGPattern({ onFabricSelect, svgRef, isDrawingMo
                 width={shape.width}
                 height={shape.height}
                 fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                stroke="#C7C7C7"
+                stroke={shape.hasImage ? "none" : "#CFCECE"}
                 strokeWidth="1"
                 onClick={() => handleShapeClick(shape.id)}
                 className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"

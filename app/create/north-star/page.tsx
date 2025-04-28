@@ -91,21 +91,24 @@ export default function CreateNorthStarPage() {
             also draw freely on the pattern.
           </p>
 
-          <div className="relative">
-            <NorthStarSVGPattern
-              onFabricSelect={handleFabricSelect}
-              svgRef={svgRef}
-              isDrawingMode={mode === "draw"}
-              style={{ width: "100%", height: "auto" }}
-            />
+          <div className="flex justify-center">
+            {/* Pattern is centered, drawing menu will appear on the left when in drawing mode */}
+            <div className="relative">
+              <NorthStarSVGPattern
+                onFabricSelect={handleFabricSelect}
+                svgRef={svgRef}
+                isDrawingMode={mode === "draw"}
+                style={{ width: "100%", height: "auto" }}
+              />
 
-            {/* Free drawing canvas (only active in drawing mode) */}
-            <FreeDrawingCanvas
-              svgRef={svgRef}
-              viewBox="0 0 1080 1080"
-              isActive={mode === "draw"}
-              defaultStrokeWidth="2"
-            />
+              {/* Free drawing canvas (only active in drawing mode) */}
+              <FreeDrawingCanvas
+                svgRef={svgRef}
+                viewBox="0 0 1080 1080"
+                isActive={mode === "draw"}
+                defaultStrokeWidth="2"
+              />
+            </div>
           </div>
 
           {/* Drawing mode selector */}
