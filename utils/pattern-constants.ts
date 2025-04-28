@@ -1,40 +1,56 @@
-// Default colors for patterns
-export const DEFAULT_COLORS = {
+export const PATTERN_COLORS = {
   NORTH_STAR: {
-    outerSquares: "#F9A826", // Orange
-    triangles: "#C74B16", // Red/brown
-    diagonalTriangles: "#A7C5EB", // Light blue
-    centerSquare: "#C7F9CC", // Mint green
+    STROKE: "#CFCECE",
+    FILL: "white",
   },
   CROSSROADS: {
-    blue: "#6A8EAE", // Blue
-    red: "#D64933", // Red
-    yellow: "#F9E784", // Yellow
-  },
-  BEAR_PAWS: {
-    mainPaw: "#8B4513", // Brown
-    background: "#E6CCB2", // Light tan
-    pawPrints: "#5D2E0C", // Darker brown
+    STROKE: "#CFCECE",
+    FILL: "white",
   },
   LOG_CABIN: {
-    center: "#D64933", // Red
-    strips: [
-      "#F9E784", // Light yellow
-      "#6A8EAE", // Blue
-      "#F9E784", // Light yellow
-      "#6A8EAE", // Blue
-      "#F9E784", // Light yellow
-      "#6A8EAE", // Blue
-      "#F9E784", // Light yellow
-      "#6A8EAE", // Blue
-    ],
+    STROKE: "#C7C7C7",
+    FILL: "white",
+  },
+  BEAR_PAWS: {
+    STROKE: "#000000", // Changed from light gray to black
+    FILL: "white",
   },
 }
 
-// Storage keys for localStorage
+export const PATTERN_STROKE_WIDTH = {
+  NORTH_STAR: 2,
+  CROSSROADS: 2,
+  LOG_CABIN: 2,
+  BEAR_PAWS: 2,
+}
+
 export const STORAGE_KEYS = {
-  NORTH_STAR: "northstar_fabrics",
-  CROSSROADS: "crossroads_fabrics",
-  BEAR_PAWS: "bearpaws_fabrics",
-  LOG_CABIN: "logcabin_fabrics",
+  NORTH_STAR: "northStarFabrics",
+  CROSSROADS: "crossroadsFabrics",
+  BEAR_PAWS: "bearPawsFabrics",
+  LOG_CABIN: "logCabinFabrics",
+}
+
+export const DEFAULT_COLORS = {
+  NORTH_STAR: {
+    outerSquares: "#F5B041",
+    triangles: "#9A348E",
+    diagonalTriangles: "#E45826",
+    centerSquare: "#FFFFFF",
+  },
+  LOG_CABIN: {
+    center: "#9A348E",
+    lightLogs: "#F5B041",
+    darkLogs: "#E45826",
+  },
+  BEAR_PAWS: {
+    background: "#FFFFFF",
+    claws: "#F5B041",
+    pawPad: "#9A348E",
+  },
+  CROSSROADS: {
+    blue: "#6A8EAE",
+    red: "#D64933",
+    yellow: "#F9E784",
+  },
 }

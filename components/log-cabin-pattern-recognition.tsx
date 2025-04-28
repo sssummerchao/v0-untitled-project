@@ -685,7 +685,7 @@ export default function LogCabinPatternRecognition({
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
                   stroke="#C7C7C7"
-                  strokeWidth="4"
+                  strokeWidth="1"
                   strokeDasharray="none"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"

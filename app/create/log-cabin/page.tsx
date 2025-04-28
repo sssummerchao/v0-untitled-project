@@ -110,22 +110,13 @@ export default function CreateLogCabinPage() {
 
           <div className="absolute bottom-8 right-8 z-10">
             <button onClick={handleDownloadImage} className="bg-transparent border-0 p-0 cursor-pointer">
-              <div className="relative">
-                <Image
-                  src="/lets-print-it-out.png"
-                  alt="Let's Print It Out"
-                  width={180}
-                  height={180}
-                  className="transition-transform hover:scale-105"
-                />
-                <Image
-                  src="/2-2-steps.png"
-                  alt="Step 2 of 2"
-                  width={60}
-                  height={60}
-                  className="absolute top-0 right-0"
-                />
-              </div>
+              <Image
+                src="/lets-print-it-out.png"
+                alt="Let's Print It Out"
+                width={180}
+                height={180}
+                className="transition-transform hover:scale-105"
+              />
             </button>
           </div>
         </div>

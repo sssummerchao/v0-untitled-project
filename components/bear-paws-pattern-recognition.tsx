@@ -969,6 +969,9 @@ export default function BearPawsPatternRecognition({
       {/* Left side: Pattern grid */}
       <div className="overflow-hidden">
         <svg ref={svgRef} width={520} height={520} viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid meet">
+          {/* White background */}
+          <rect x="0" y="0" width="1080" height="1080" fill="white" />
+
           {/* Define clip paths for each shape */}
           <defs>
             {shapes.map((shape) => (
@@ -1001,8 +1004,8 @@ export default function BearPawsPatternRecognition({
                 <polygon
                   points={shape.points}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
+                  stroke="#CFCECE"
+                  strokeWidth="1"
                   strokeDasharray="none"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
@@ -1015,8 +1018,8 @@ export default function BearPawsPatternRecognition({
                   width={shape.width}
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#C7C7C7"
-                  strokeWidth="4"
+                  stroke="#CFCECE"
+                  strokeWidth="1"
                   strokeDasharray="none"
                   onClick={() => handleShapeClick(shape.id)}
                   className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"

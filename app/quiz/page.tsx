@@ -36,7 +36,7 @@ const PATTERN_MAPPING = {
 const PATTERN_DESCRIPTIONS = {
   "north-star": {
     title: "You got North Star!",
-    image: "/north-star.png",
+    image: "/north-star-new.png",
     description: [
       "The North Star has been used for centuries by sailors, explorers, and travelers as a reliable way to find true North.",
       "Quilts with the North Star told freedom-seekers that they were on the correct path to Canada.",
@@ -44,7 +44,7 @@ const PATTERN_DESCRIPTIONS = {
   },
   "log-cabin": {
     title: "You got Log Cabin!",
-    image: "/log-cabin.png",
+    image: "/log-cabin-new.png",
     description: [
       "Log cabins are a symbol of hearth and home.",
       "Quilts displaying log cabins were safe houses, indicating that freedom-seekers could find safety and shelter.",
@@ -52,7 +52,7 @@ const PATTERN_DESCRIPTIONS = {
   },
   "bear-paws": {
     title: "You got Bear Paw!",
-    image: "/bear-paws.png",
+    image: "/bear-paws-new.png",
     description: [
       "The bear paw pattern symbolized wild animals and their paths.",
       "Quilts featuring a bear paw told freedom-seekers that they should avoid roads and travel along animal trails to avoid slave catchers.",
@@ -60,7 +60,7 @@ const PATTERN_DESCRIPTIONS = {
   },
   crossroads: {
     title: "You got Crossroads!",
-    image: "/squares.png",
+    image: "/crossroads-new.png",
     description: [
       "Crossroads are critical moments where a decision must be made.",
       "Quilts with the crossroads pattern directed freedom-seekers toward Cleveland, Ohio, where they could take multiple major routes to freedom.",
@@ -845,7 +845,7 @@ export default function QuizPage() {
               </div>
             </button>
 
-            <Link href={`/patterns/${pattern}`}>
+            <Link href={`/create/${pattern}`}>
               <div className="flex items-center justify-center bg-gray-200 rounded-full p-6 hover:bg-gray-300 transition-colors">
                 <div className="flex items-center">
                   <span className="text-lg font-medium mr-2">Let's make this</span>

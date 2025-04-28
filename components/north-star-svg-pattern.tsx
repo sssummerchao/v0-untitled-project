@@ -49,7 +49,11 @@ export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingM
     { id: "shape14", type: "polygon", points: "0,540 271,540 0,270 0,540" },
     { id: "shape15", type: "polygon", points: "811,810 811,1080 541,810 811,810" },
     { id: "shape16", type: "polygon", points: "271,810 271,1080 541,810 271,810" },
-    { id: "shape17", type: "rect", x: 271, y: 270, width: 540, height: 540 },
+    // Replace the single middle square with 4 smaller squares
+    { id: "shape17-topleft", type: "rect", x: 271, y: 270, width: 270, height: 270 },
+    { id: "shape17-topright", type: "rect", x: 541, y: 270, width: 270, height: 270 },
+    { id: "shape17-bottomleft", type: "rect", x: 271, y: 540, width: 270, height: 270 },
+    { id: "shape17-bottomright", type: "rect", x: 541, y: 540, width: 270, height: 270 },
     { id: "shape18", type: "polygon", points: "271,270 0,270 1,0 271,0 271,270" },
     { id: "shape19", type: "rect", x: 811, y: 0, width: 269, height: 270 },
     { id: "shape20", type: "rect", x: 811, y: 810, width: 269, height: 270 },
@@ -603,19 +607,30 @@ export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingM
 
           {/* Render all shapes from the SVG */}
           {shapes.map((shape) => {
+            const isSelected = selectedShapes.includes(shape.id)
+            const hasImage = shape.id in shapeImages
+
             if (shape.type === "polygon") {
               return (
                 <polygon
                   key={shape.id}
                   points={shape.points}
-                  fill={shapeImages[shape.id] ? `url(#pattern-${shape.id})` : "white"}
-                  stroke="black"
-                  strokeWidth="2"
+                  fill={hasImage ? `url(#pattern-${shape.id})` : "white"}
+                  stroke="#CFCECE"
+                  strokeWidth="1"
                   onClick={() => handleShapeClick(shape.id)}
-                  className={`cursor-pointer ${
-                    selectedShapes.includes(shape.id) ? "stroke-gray-800" : "hover:stroke-gray-400"
-                  }`}
-                  style={{ fillOpacity: selectedShapes.includes(shape.id) ? 0.8 : 1 }}
+                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  style={{
+                    fillOpacity: 1,
+                    fill: isSelected
+                      ? hasImage
+                        ? "#ffffff"
+                        : "#666666"
+                      : hasImage
+                        ? `url(#pattern-${shape.id})`
+                        : "white",
+                    fillOpacity: isSelected ? (hasImage ? 0.5 : 0.2) : 1,
+                  }}
                 />
               )
             } else if (shape.type === "rect") {
@@ -626,14 +641,21 @@ export default function NorthStarSVGPattern({ onFabricSelect, svgRef, isDrawingM
                   y={shape.y}
                   width={shape.width}
                   height={shape.height}
-                  fill={shapeImages[shape.id] ? `url(#pattern-${shape.id})` : "white"}
-                  stroke="black"
-                  strokeWidth="2"
+                  fill={hasImage ? `url(#pattern-${shape.id})` : "white"}
+                  stroke="#CFCECE"
+                  strokeWidth="1"
                   onClick={() => handleShapeClick(shape.id)}
-                  className={`cursor-pointer ${
-                    selectedShapes.includes(shape.id) ? "stroke-gray-800" : "hover:stroke-gray-400"
-                  }`}
-                  style={{ fillOpacity: selectedShapes.includes(shape.id) ? 0.8 : 1 }}
+                  className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
+                  style={{
+                    fill: isSelected
+                      ? hasImage
+                        ? "#ffffff"
+                        : "#666666"
+                      : hasImage
+                        ? `url(#pattern-${shape.id})`
+                        : "white",
+                    fillOpacity: isSelected ? (hasImage ? 0.5 : 0.2) : 1,
+                  }}
                 />
               )
             }

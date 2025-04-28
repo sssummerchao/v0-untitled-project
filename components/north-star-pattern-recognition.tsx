@@ -428,7 +428,7 @@ export default function NorthStarPatternRecognition({
                   points={shape.points}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
                   stroke={strokeColor}
-                  strokeWidth={strokeWidth}
+                  strokeWidth={1}
                   strokeLinejoin="miter"
                   strokeLinecap="butt"
                   vectorEffect="non-scaling-stroke"
@@ -444,7 +444,7 @@ export default function NorthStarPatternRecognition({
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
                   stroke={strokeColor}
-                  strokeWidth={strokeWidth}
+                  strokeWidth={1}
                   strokeLinejoin="miter"
                   strokeLinecap="butt"
                   vectorEffect="non-scaling-stroke"

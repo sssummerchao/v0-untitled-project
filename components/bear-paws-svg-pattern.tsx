@@ -980,6 +980,7 @@ export default function BearPawsSVGPattern({
           preserveAspectRatio="xMidYMid meet"
           style={{ backgroundColor: "white" }}
           fill="white"
+          stroke="#000000"
         >
           {/* White background */}
           <rect x="0" y="0" width="1080" height="1080" fill="white" style={{ zIndex: -1 }} />

@@ -884,8 +884,8 @@ export default function CrossroadsSvgPattern({
                     points={shape.points}
                     fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
                     fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
-                    stroke="#000000"
-                    strokeWidth="2"
+                    stroke="#CFCECE"
+                    strokeWidth="1"
                     className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
                 ) : (
@@ -897,8 +897,8 @@ export default function CrossroadsSvgPattern({
                     transform={shape.transform}
                     fill={isSelected ? (hasImage ? "#ffffff" : "#666666") : "transparent"}
                     fillOpacity={isSelected ? (hasImage ? 0.5 : 0.2) : 0}
-                    stroke="#000000"
-                    strokeWidth="2"
+                    stroke="#CFCECE"
+                    strokeWidth="1"
                     className="cursor-pointer hover:stroke-gray-400 transition-colors duration-200"
                   />
                 )}
