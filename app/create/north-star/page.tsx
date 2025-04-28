@@ -7,7 +7,8 @@ import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
 import NorthStarSVGPattern from "@/components/north-star-svg-pattern"
-import { downloadPattern } from "@/utils/svg-capture"
+// Update the import for the download function
+import { downloadPattern } from "@/utils/pattern-download-new"
 
 export default function CreateNorthStarPage() {
   const [fabricSelections, setFabricSelections] = useState({})
@@ -43,8 +44,23 @@ export default function CreateNorthStarPage() {
       return
     }
 
-    // Download the pattern
-    await downloadPattern(svgRef.current, "north-star-quilt-pattern.png")
+    // Temporarily switch to select mode to ensure drawings are visible in the main SVG
+    const previousMode = mode
+    if (mode === "draw") {
+      setMode("select")
+      // Give a small delay to allow the UI to update
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    try {
+      // Download the pattern
+      await downloadPattern(svgRef.current, "north-star-quilt-pattern.png")
+    } finally {
+      // Restore previous mode if needed
+      if (previousMode === "draw") {
+        setMode(previousMode)
+      }
+    }
   }
 
   return (

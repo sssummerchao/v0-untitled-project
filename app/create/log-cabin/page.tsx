@@ -7,7 +7,8 @@ import { STORAGE_KEYS } from "@/utils/pattern-constants"
 import { useState, useRef } from "react"
 import FreeDrawingCanvas from "@/components/free-drawing-canvas"
 import DrawingModeSelector from "@/components/drawing-mode-selector"
-import { downloadPattern } from "@/utils/svg-capture"
+// Update the import for the download function
+import { downloadPattern } from "@/utils/pattern-download-new"
 
 const DEFAULT_COLORS = {
   LOG_CABIN: {
