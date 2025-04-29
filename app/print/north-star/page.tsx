@@ -376,22 +376,23 @@ export default function PrintNorthStarPage() {
         <div className="max-w-6xl mx-auto">
           {/* Close button */}
           <div className="fixed top-8 left-8 z-10">
-            <Link href="/">
+            <Link href="/" draggable="false" style={{ pointerEvents: "auto" }}>
               <div className="transition-transform hover:scale-105">
-                <Image src="/close-button.png" alt="Close" width={60} height={60} />
+                <Image src="/close-button.png" alt="Close" width={60} height={60} draggable="false" />
               </div>
             </Link>
           </div>
 
           {/* Back to patterns button */}
           <div className="fixed bottom-8 left-8 z-10">
-            <Link href="/create/north-star">
+            <Link href="/create/north-star" draggable="false" style={{ pointerEvents: "auto" }}>
               <Image
                 src="/back-to-patterns-button.png"
                 alt="Back to patterns"
                 width={180}
                 height={180}
                 className="transition-transform hover:scale-105"
+                draggable="false"
               />
             </Link>
           </div>
@@ -405,6 +406,7 @@ export default function PrintNorthStarPage() {
                 width={180}
                 height={180}
                 className="transition-transform hover:scale-105"
+                draggable="false"
               />
             </button>
           </div>

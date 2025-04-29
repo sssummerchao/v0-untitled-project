@@ -243,13 +243,19 @@ export default function QuizPage() {
         return (
           <>
             <div className="text-center mb-8 relative">
-              <Link href="/patterns" className="absolute left-0 top-1/2 -translate-y-1/2">
+              <Link
+                href="/patterns"
+                className="absolute left-0 top-1/2 -translate-y-1/2"
+                draggable="false"
+                style={{ pointerEvents: "auto" }}
+              >
                 <div className="bg-gray-200 rounded-full p-3 hover:bg-gray-300 transition-colors">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/exit-5rgbGMmUFAqmIPd07pwCxFfxOaHQ74.png"
                     alt="Exit"
                     width={40}
                     height={40}
+                    draggable="false"
                   />
                 </div>
               </Link>
@@ -294,6 +300,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -335,6 +342,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -376,6 +384,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -417,6 +426,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -430,13 +440,19 @@ export default function QuizPage() {
         return (
           <>
             <div className="text-center mb-8 relative">
-              <Link href="/patterns" className="absolute left-0 top-1/2 -translate-y-1/2">
+              <Link
+                href="/patterns"
+                className="absolute left-0 top-1/2 -translate-y-1/2"
+                draggable="false"
+                style={{ pointerEvents: "auto" }}
+              >
                 <div className="bg-gray-200 rounded-full p-3 hover:bg-gray-300 transition-colors">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/exit-5rgbGMmUFAqmIPd07pwCxFfxOaHQ74.png"
                     alt="Exit"
                     width={40}
                     height={40}
+                    draggable="false"
                   />
                 </div>
               </Link>
@@ -483,6 +499,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -524,6 +541,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -565,6 +583,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -606,6 +625,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -619,13 +639,19 @@ export default function QuizPage() {
         return (
           <>
             <div className="text-center mb-8 relative">
-              <Link href="/patterns" className="absolute left-0 top-1/2 -translate-y-1/2">
+              <Link
+                href="/patterns"
+                className="absolute left-0 top-1/2 -translate-y-1/2"
+                draggable="false"
+                style={{ pointerEvents: "auto" }}
+              >
                 <div className="bg-gray-200 rounded-full p-3 hover:bg-gray-300 transition-colors">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/exit-5rgbGMmUFAqmIPd07pwCxFfxOaHQ74.png"
                     alt="Exit"
                     width={40}
                     height={40}
+                    draggable="false"
                   />
                 </div>
               </Link>
@@ -670,6 +696,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -711,6 +738,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -752,6 +780,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -793,6 +822,7 @@ export default function QuizPage() {
                             objectFit: "cover",
                           }}
                           className="rounded-lg shadow-md"
+                          draggable="false"
                         />
                       </div>
                     </div>
@@ -821,6 +851,7 @@ export default function QuizPage() {
               fill
               style={{ objectFit: "contain" }}
               className="rounded-lg"
+              draggable="false"
             />
           </div>
         </div>
@@ -845,7 +876,7 @@ export default function QuizPage() {
               </div>
             </button>
 
-            <Link href={`/create/${pattern}`}>
+            <Link href={`/create/${pattern}`} draggable="false" style={{ pointerEvents: "auto" }}>
               <div className="flex items-center justify-center bg-gray-200 rounded-full p-6 hover:bg-gray-300 transition-colors">
                 <div className="flex items-center">
                   <span className="text-lg font-medium mr-2">Let's make this</span>

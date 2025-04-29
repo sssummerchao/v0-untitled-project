@@ -83,8 +83,8 @@ export default function StoryQuizPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
           <div className="fixed bottom-8 left-8 z-10">
-            <Link href="/patterns">
-              <Image src="/back-button.png" alt="Back" width={60} height={60} />
+            <Link href="/patterns" draggable="false" style={{ pointerEvents: "auto" }}>
+              <Image src="/back-button.png" alt="Back" width={60} height={60} draggable="false" />
             </Link>
           </div>
 
@@ -139,6 +139,7 @@ export default function StoryQuizPage() {
                               objectFit: "cover",
                             }}
                             className="rounded-lg shadow-md"
+                            draggable="false"
                           />
                         </div>
                       </div>
@@ -154,6 +155,7 @@ export default function StoryQuizPage() {
                   className={`bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity mx-auto ${
                     !selectedStory ? "opacity-50 cursor-not-allowed" : ""
                   }`}
+                  style={{ pointerEvents: "auto" }}
                 >
                   <div className="bg-gray-200 rounded-full p-2 mr-3">
                     <svg
@@ -187,6 +189,7 @@ export default function StoryQuizPage() {
                         fill
                         style={{ objectFit: "cover" }}
                         className="rounded-lg"
+                        draggable="false"
                       />
                     </div>
                     <h3 className="text-2xl font-bold mb-2">
@@ -209,6 +212,7 @@ export default function StoryQuizPage() {
                     <button
                       onClick={handleViewPattern}
                       className="bg-black text-white rounded-full flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity mx-auto"
+                      style={{ pointerEvents: "auto" }}
                     >
                       <div className="bg-gray-200 rounded-full p-2 mr-3">
                         <svg

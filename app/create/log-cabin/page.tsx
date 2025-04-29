@@ -73,8 +73,8 @@ export default function CreateLogCabinPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center mb-8 relative">
             <div className="absolute left-0">
-              <Link href="/patterns">
-                <Image src="/close.png" alt="Close" width={60} height={60} />
+              <Link href="/patterns" draggable="false" style={{ pointerEvents: "auto" }}>
+                <Image src="/close.png" alt="Close" width={60} height={60} draggable="false" />
               </Link>
             </div>
             <h1 className="text-4xl font-bold text-center text-gray-900">Create Your Log Cabin Quilt</h1>
@@ -116,6 +116,7 @@ export default function CreateLogCabinPage() {
                 width={180}
                 height={180}
                 className="transition-transform hover:scale-105"
+                draggable="false"
               />
             </button>
           </div>

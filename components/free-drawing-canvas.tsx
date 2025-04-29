@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Undo2, Redo2, GripVertical } from "lucide-react"
+import { Undo2, Redo2 } from "lucide-react"
 
 // Update the interface to include defaultStrokeWidth prop
 interface FreeDrawingCanvasProps {
@@ -63,35 +63,33 @@ export default function FreeDrawingCanvas({
   useEffect(() => {
     if (defaultPositionSet) return
 
-    // Set the default position to match the current position on the log cabin page
-    const calculateDefaultPosition = () => {
-      // Get the viewport height
+    // Set a fixed position that works well for most screens
+    const calculateFixedPosition = () => {
+      // Get the viewport dimensions
+      const viewportWidth = window.innerWidth
       const viewportHeight = window.innerHeight
 
-      // Calculate the vertical center position
-      const verticalCenter = viewportHeight / 2
+      // Position the menu on the left side of the screen
+      const xPosition = 20 // 20px from the left edge
 
-      // Apply the same transform that was used before (translateY(-50%) translateY(30px))
-      // This means: move up by half the height of the menu (approx 250px) and then down by 30px
+      // Center vertically
       const menuHeight = 500 // The height of our menu
-      const yPosition = verticalCenter - menuHeight / 2 + 30
+      const yPosition = (viewportHeight - menuHeight) / 2
 
-      setMenuPosition((prev) => ({ ...prev, y: yPosition }))
+      setMenuPosition({ x: xPosition, y: yPosition })
       setDefaultPositionSet(true)
     }
 
-    calculateDefaultPosition()
+    calculateFixedPosition()
 
-    // Recalculate if window is resized before the menu is dragged
+    // Recalculate if window is resized
     const handleResize = () => {
-      if (!hasBeenDragged) {
-        calculateDefaultPosition()
-      }
+      calculateFixedPosition()
     }
 
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [defaultPositionSet, hasBeenDragged])
+  }, [defaultPositionSet])
 
   // Extract viewBox dimensions
   const viewBoxDimensions = viewBox.split(" ").map(Number)
@@ -516,8 +514,8 @@ export default function FreeDrawingCanvas({
   // Add and remove event listeners for dragging
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleDragMove, { passive: false })
-      window.addEventListener("touchmove", handleDragMove, { passive: false })
+      window.addEventListener("mousemove", handleDragMove)
+      window.addEventListener("touchmove", handleDragMove)
       window.addEventListener("mouseup", handleDragEnd)
       window.addEventListener("touchend", handleDragEnd)
     } else {
@@ -525,11 +523,6 @@ export default function FreeDrawingCanvas({
       window.removeEventListener("touchmove", handleDragMove)
       window.removeEventListener("mouseup", handleDragEnd)
       window.removeEventListener("touchend", handleDragEnd)
-
-      // Ensure scrolling is re-enabled if component unmounts while dragging
-      if (document.body.style.overflow === "hidden") {
-        enablePageScroll()
-      }
     }
 
     return () => {
@@ -559,16 +552,25 @@ export default function FreeDrawingCanvas({
           width: "120px",
           height: "500px",
           overflowY: "auto",
-          cursor: isDragging ? "grabbing" : "default",
+          cursor: isDragging ? "grabbing" : "grab", // Change cursor to indicate draggability
         }}
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        draggable="true"
       >
-        {/* Drag handle */}
+        {/* Header with drag icon that acts as a drag handle */}
         <div
-          className="h-8 flex items-center justify-center bg-gray-100 rounded-t-lg cursor-grab active:cursor-grabbing"
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
+          className="h-8 flex items-center justify-center bg-gray-100 rounded-t-lg"
+          style={{ cursor: isDragging ? "grabbing" : "grab" }}
         >
-          <GripVertical size={16} className="text-gray-500" />
+          {/* Dots drag icon - rotated 90 degrees and 30% smaller */}
+          <div className="flex" style={{ transform: "rotate(90deg) scale(0.7)" }}>
+            <div className="grid grid-cols-2 gap-1">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="p-3">
@@ -797,7 +799,7 @@ export default function FreeDrawingCanvas({
             </>
           )}
 
-          {/* Only show existing paths in the overlay when in drawing mode */}
+          {/* Existing paths */}
           {paths.map((path, index) => (
             <React.Fragment key={index}>
               {path.stitchType === "running" && (

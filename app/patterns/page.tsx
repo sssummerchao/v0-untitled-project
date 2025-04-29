@@ -44,8 +44,8 @@ export default function PatternsPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-5xl mx-auto">
           <div className="fixed bottom-8 left-8 z-10">
-            <Link href="/">
-              <Image src="/back-button.png" alt="Back" width={60} height={60} />
+            <Link href="/" draggable="false" style={{ pointerEvents: "auto" }}>
+              <Image src="/back-button.png" alt="Back" width={60} height={60} draggable="false" />
             </Link>
           </div>
 
@@ -54,7 +54,13 @@ export default function PatternsPage() {
 
           <div className="grid grid-cols-4 gap-8 mb-16">
             {patterns.map((pattern, index) => (
-              <Link key={pattern.id} href={`/patterns/${pattern.id}`} className="flex flex-col items-center group">
+              <Link
+                key={pattern.id}
+                href={`/patterns/${pattern.id}`}
+                className="flex flex-col items-center group"
+                draggable="false"
+                style={{ pointerEvents: "auto" }}
+              >
                 <div className="mb-4 transition-transform duration-300 group-hover:scale-105">
                   <div
                     style={{
@@ -71,6 +77,7 @@ export default function PatternsPage() {
                       fill
                       style={{ objectFit: "cover" }}
                       className="rounded-lg shadow-md"
+                      draggable="false"
                     />
                   </div>
                 </div>
@@ -85,7 +92,7 @@ export default function PatternsPage() {
           </div>
 
           <div className="text-center">
-            <Link href="/quiz">
+            <Link href="/quiz" draggable="false" style={{ pointerEvents: "auto" }}>
               <div className="bg-black text-white rounded-full inline-flex items-center px-8 py-4 hover:opacity-90 transition-opacity">
                 <span className="text-lg">Or take a quiz to find your pattern</span>
               </div>

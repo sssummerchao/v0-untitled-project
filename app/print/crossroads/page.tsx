@@ -260,17 +260,18 @@ export default function PrintCrossroadsPage() {
         <div className="max-w-6xl mx-auto">
           {/* Close button */}
           <div className="fixed top-8 left-8 z-10">
-            <Link href="/">
+            <Link href="/" draggable="false" style={{ pointerEvents: "auto" }}>
               <div className="transition-transform hover:scale-105">
-                <Image src="/close-button.png" alt="Close" width={60} height={60} />
+                <Image draggable="false" src="/close-button.png" alt="Close" width={60} height={60} />
               </div>
             </Link>
           </div>
 
           {/* Back to patterns button */}
           <div className="fixed bottom-8 left-8 z-10">
-            <Link href="/create/crossroads">
+            <Link href="/create/crossroads" draggable="false" style={{ pointerEvents: "auto" }}>
               <Image
+                draggable="false"
                 src="/back-to-patterns-button.png"
                 alt="Back to patterns"
                 width={180}
@@ -284,6 +285,7 @@ export default function PrintCrossroadsPage() {
           <div className="fixed bottom-8 right-8 z-10">
             <button onClick={handlePrint} className="bg-transparent border-0 p-0 cursor-pointer">
               <Image
+                draggable="false"
                 src="/print-button.png"
                 alt="Print"
                 width={180}

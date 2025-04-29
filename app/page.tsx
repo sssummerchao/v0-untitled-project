@@ -211,6 +211,7 @@ export default function Home() {
                 opacity: 0.8,
                 pointerEvents: "none", // Prevent image from interfering with drag events
               }}
+              draggable="false"
             />
           </div>
         )
@@ -224,6 +225,7 @@ export default function Home() {
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.6)",
               backdropFilter: "blur(5px)",
+              pointerEvents: "auto",
             }}
           >
             <h1 className="text-6xl font-bold text-gray-900 mb-6">Community Threads</h1>
@@ -235,7 +237,12 @@ export default function Home() {
             </p>
 
             <div className="flex justify-center">
-              <Link href="/patterns" className="inline-block">
+              <Link
+                href="/patterns"
+                className="inline-block"
+                draggable="false"
+                style={{ pointerEvents: "auto", position: "relative", zIndex: 50 }}
+              >
                 <div className="bg-black text-white rounded-full flex items-center px-6 py-3 hover:opacity-90 transition-opacity">
                   <span className="text-lg font-medium mr-2">Start Making</span>
                   <ArrowRight className="h-5 w-5" />

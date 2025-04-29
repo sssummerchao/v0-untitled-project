@@ -35,8 +35,8 @@ export default function BearPawsPage() {
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto">
           <div className="fixed bottom-8 left-8 z-10">
-            <Link href="/patterns">
-              <Image src="/back-button.png" alt="Back" width={60} height={60} />
+            <Link href="/patterns" draggable="false" style={{ pointerEvents: "auto" }}>
+              <Image src="/back-button.png" alt="Back" width={60} height={60} draggable="false" />
             </Link>
           </div>
 
@@ -52,6 +52,7 @@ export default function BearPawsPage() {
                       height={400}
                       style={{ objectFit: "contain" }}
                       className="rounded-lg shadow-lg"
+                      draggable="false"
                     />
                   </div>
                 </div>
@@ -69,7 +70,7 @@ export default function BearPawsPage() {
                   </p>
 
                   <div style={{ transform: "rotate(-4.49deg)", transformOrigin: "center left" }}>
-                    <Link href="/create/bear-paws">
+                    <Link href="/create/bear-paws" draggable="false" style={{ pointerEvents: "auto" }}>
                       <div className="bg-black text-white rounded-full inline-flex items-center pr-6 pl-2 py-2 hover:opacity-90 transition-opacity">
                         <div className="bg-gray-200 rounded-full p-2 mr-3">
                           <svg
@@ -98,7 +99,13 @@ export default function BearPawsPage() {
               <div className="sr-only">Other Patterns</div>
               <div className="space-y-6 flex flex-col items-center">
                 {otherPatterns.map((pattern) => (
-                  <Link key={pattern.id} href={`/patterns/${pattern.id}`} className="block group">
+                  <Link
+                    key={pattern.id}
+                    href={`/patterns/${pattern.id}`}
+                    className="block group"
+                    draggable="false"
+                    style={{ pointerEvents: "auto" }}
+                  >
                     <div className="flex items-center justify-center p-3 rounded-lg transition-transform duration-300 group-hover:scale-110">
                       <div style={{ transform: `rotate(${pattern.rotation})` }}>
                         <Image
@@ -107,6 +114,7 @@ export default function BearPawsPage() {
                           width={80}
                           height={80}
                           className="rounded-md"
+                          draggable="false"
                         />
                       </div>
                       <span className="sr-only">{pattern.id}</span>
@@ -115,7 +123,7 @@ export default function BearPawsPage() {
                 ))}
 
                 {/* Quiz button at the bottom of navigation */}
-                <Link href="/quiz" className="mt-8 block group">
+                <Link href="/quiz" className="mt-8 block group" draggable="false" style={{ pointerEvents: "auto" }}>
                   <div className="flex items-center justify-center p-3 rounded-lg transition-transform duration-300 group-hover:scale-110">
                     <Image
                       src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/quiz%20button-M1c5VAHv3O2ga5abuyswEav5yuYLYT.png"
@@ -124,6 +132,7 @@ export default function BearPawsPage() {
                       height={100}
                       className="rounded-md"
                       style={{ transform: "rotate(-5deg)" }}
+                      draggable="false"
                     />
                   </div>
                 </Link>
