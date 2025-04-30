@@ -583,25 +583,11 @@ export default function FreeDrawingCanvas({
           width: "120px",
           height: "auto", // Changed from fixed height to auto to accommodate all content
           overflowY: "auto",
-          cursor: isDragging ? "grabbing" : "grab", // Change cursor to indicate draggability
         }}
-        onMouseDown={handleDragStart}
-        onTouchStart={handleDragStart}
-        draggable="true"
       >
-        {/* Header with drag icon that acts as a drag handle */}
-        <div
-          className="h-8 flex items-center justify-center bg-gray-100 rounded-t-lg"
-          style={{ cursor: isDragging ? "grabbing" : "grab" }}
-        >
-          {/* Dots drag icon - rotated 90 degrees and 30% smaller */}
-          <div className="flex" style={{ transform: "rotate(90deg) scale(0.7)" }}>
-            <div className="grid grid-cols-2 gap-1">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-1.5 h-1.5 bg-gray-800 rounded-full"></div>
-              ))}
-            </div>
-          </div>
+        {/* Simple header with title */}
+        <div className="h-8 flex items-center justify-center bg-gray-100 rounded-t-lg">
+          <h3 className="text-sm font-medium">Drawing Tools</h3>
         </div>
 
         <div className="p-3">

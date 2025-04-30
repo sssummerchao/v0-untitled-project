@@ -727,7 +727,7 @@ export default function LogCabinSVGPattern({ onFabricSelect, svgRef, isDrawingMo
                 y={shape.y}
                 width={shape.width}
                 height={shape.height}
-                fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
+                fill={shape.isSelected ? (shape.hasImage ? "#ffffff" : "#666666") : "transparent"}
                 stroke={shape.hasImage ? "none" : "#CFCECE"}
                 strokeWidth="1"
                 onClick={() => handleShapeClick(shape.id)}
