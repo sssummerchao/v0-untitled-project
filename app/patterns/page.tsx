@@ -45,7 +45,7 @@ export default function PatternsPage() {
         <div className="max-w-5xl mx-auto">
           <div className="fixed bottom-8 left-8 z-10">
             <Link href="/" draggable="false" style={{ pointerEvents: "auto" }}>
-              <Image src="/back-button.png" alt="Back" width={60} height={60} draggable="false" />
+              <Image src="/back-button.png" alt="Back" width={60} height={60} priority draggable="false" />
             </Link>
           </div>
 
@@ -75,6 +75,8 @@ export default function PatternsPage() {
                       src={pattern.image || "/placeholder.svg"}
                       alt={pattern.name}
                       fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, 220px"
                       style={{ objectFit: "cover" }}
                       className="rounded-lg shadow-md"
                       draggable="false"
