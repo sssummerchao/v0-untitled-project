@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Undo2, Redo2 } from "lucide-react"
 
 // Update the interface to include defaultStrokeWidth prop
@@ -335,24 +335,24 @@ export default function FreeDrawingCanvas({
   }
 
   // Undo the last drawing
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (paths.length === 0) return
 
     // Remove the last path and add it to the undo stack
     const lastPath = paths[paths.length - 1]
     setPaths((prev) => prev.slice(0, -1))
     setUndoStack((prev) => [...prev, lastPath])
-  }
+  }, [paths])
 
   // Redo the last undone drawing
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (undoStack.length === 0) return
 
     // Remove the last item from the undo stack and add it back to the paths
     const lastUndone = undoStack[undoStack.length - 1]
     setUndoStack((prev) => prev.slice(0, -1))
     setPaths((prev) => [...prev, lastUndone])
-  }
+  }, [undoStack])
 
   // Color options
   const colorOptions = [
@@ -427,6 +427,37 @@ export default function FreeDrawingCanvas({
       setSelectedCrossStitchIndex(index)
     }
   }, [strokeColor])
+
+  // Add keyboard shortcuts for undo/redo
+  useEffect(() => {
+    if (!isActive) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if the drawing panel is active
+      if (!isActive) return
+
+      // Undo: Ctrl+Z or Command+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault()
+        handleUndo()
+      }
+
+      // Redo: Ctrl+Y or Command+Y or Ctrl+Shift+Z or Command+Shift+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault()
+        handleRedo()
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "z") {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isActive, handleUndo, handleRedo])
 
   // Draggable menu handlers
   // Add a function to disable page scrolling during drag operations
@@ -550,7 +581,7 @@ export default function FreeDrawingCanvas({
           left: `${menuPosition.x}px`,
           top: `${menuPosition.y}px`,
           width: "120px",
-          height: "500px",
+          height: "auto", // Changed from fixed height to auto to accommodate all content
           overflowY: "auto",
           cursor: isDragging ? "grabbing" : "grab", // Change cursor to indicate draggability
         }}
@@ -653,24 +684,29 @@ export default function FreeDrawingCanvas({
             </div>
           </div>
 
-          {/* Undo/Redo buttons */}
-          <div className="flex justify-between">
-            <button
-              className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-12 h-8"
-              onClick={handleUndo}
-              disabled={paths.length === 0}
-              title="Undo"
-            >
-              <Undo2 size={16} />
-            </button>
-            <button
-              className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-12 h-8"
-              onClick={handleRedo}
-              disabled={undoStack.length === 0}
-              title="Redo"
-            >
-              <Redo2 size={16} />
-            </button>
+          {/* Undo/Redo section */}
+          <div className="mb-4">
+            <h3 className="text-xl font-normal mb-2 text-center">Edit:</h3>
+            <div className="flex justify-between">
+              <button
+                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-[48%]"
+                onClick={handleUndo}
+                disabled={paths.length === 0}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo2 size={16} className="mr-1" />
+                <span className="text-sm">Undo</span>
+              </button>
+              <button
+                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center justify-center w-[48%]"
+                onClick={handleRedo}
+                disabled={undoStack.length === 0}
+                title="Redo (Ctrl+Y)"
+              >
+                <Redo2 size={16} className="mr-1" />
+                <span className="text-sm">Redo</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

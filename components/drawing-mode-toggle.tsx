@@ -302,6 +302,37 @@ export default function DrawingModeToggle({ svgRef, viewBox, onModeChange }: Dra
     }
   }, [strokeColor])
 
+  // Add keyboard shortcuts for undo/redo
+  useEffect(() => {
+    if (!isDrawingMode) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if drawing mode is active
+      if (!isDrawingMode) return
+
+      // Undo: Ctrl+Z or Command+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+        e.preventDefault()
+        handleUndo()
+      }
+
+      // Redo: Ctrl+Y or Command+Y or Ctrl+Shift+Z or Command+Shift+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
+        e.preventDefault()
+        handleRedo()
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "z") {
+        e.preventDefault()
+        handleRedo()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isDrawingMode])
+
   // Render stitch preview based on type
   const renderStitchPreview = (type: StitchType) => {
     switch (type) {
