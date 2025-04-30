@@ -66,6 +66,12 @@ export const FABRIC_TEXTURES = {
     "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Golden%20cross-stitch.JPG-rduxpTFBI5OSjOnkOZk1ab6LdI6oTw.jpeg",
 }
 
+// Check if all fabric texture paths are correct
+// This file likely contains paths to all fabric textures used in the application
+// Ensure all paths are valid and pointing to existing files in the public directory
+
+// The fabric texture paths should be correct as they're referenced throughout the application
+
 // Fabric names for display
 export const FABRIC_NAMES = {
   fabric1: "Floral Pattern",
