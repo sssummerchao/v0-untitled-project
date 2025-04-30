@@ -1004,7 +1004,7 @@ export default function BearPawsPatternRecognition({
                 <polygon
                   points={shape.points}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#CFCECE"
+                  stroke={shape.hasImage ? "none" : "#CFCECE"}
                   strokeWidth="1"
                   strokeDasharray="none"
                   onClick={() => handleShapeClick(shape.id)}
@@ -1018,7 +1018,7 @@ export default function BearPawsPatternRecognition({
                   width={shape.width}
                   height={shape.height}
                   fill={shape.hasImage && shape.isSelected ? "#ffffff" : shape.isSelected ? "#666666" : "transparent"}
-                  stroke="#CFCECE"
+                  stroke={shape.hasImage ? "none" : "#CFCECE"}
                   strokeWidth="1"
                   strokeDasharray="none"
                   onClick={() => handleShapeClick(shape.id)}
