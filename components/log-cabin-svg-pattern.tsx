@@ -14,7 +14,7 @@ import {
 // Add the onFabricSelect prop to the component
 export default function LogCabinSVGPattern({ onFabricSelect, svgRef, isDrawingMode, style }) {
   // State for selected shapes and fabric images
-  const [selectedShapes, setSelectedShapes] = useState<string[]>(["shape-4", "shape-9"])
+  const [selectedShapes, setSelectedShapes] = useState<string[]>([])
   const [shapeImages, setShapeImages] = useState<Record<string, string>>({})
   const [showCamera, setShowCamera] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
